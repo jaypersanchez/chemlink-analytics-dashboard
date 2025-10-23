@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChemLink Analytics Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ChemLink Analytics Dashboard</h1>
+            <p class="subtitle">Real-time platform metrics and insights</p>
+        </header>
+
+        <!-- Summary Cards -->
+        <section class="summary-section">
+            <h2>Quick Stats (Last 30 Days)</h2>
+            <div class="cards-grid" id="summaryCards">
+                <div class="card loading">Loading...</div>
+            </div>
+        </section>
+
+        <!-- Growth Metrics -->
+        <section class="metrics-section category-growth">
+            <div class="category-header">
+                <h2>📈 Growth Metrics</h2>
+                <p class="category-description">Track user acquisition and platform expansion</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="new-users-monthly">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>New Users - Monthly Trend</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't know if our marketing efforts are working or how fast we're acquiring users compared to competitors</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📈 New Users - Monthly Trend</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>This chart displays the total number of new users who signed up each month. Each bar represents one month's worth of new registrations.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Higher bars = more new sign-ups that month. Look for upward trends to see if your user acquisition is growing.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without this data, you can't tell if marketing campaigns are effective or how you compare to competitors in growth speed.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>SELECT COUNT(*) FROM persons GROUP BY month</code></p>
+                    </div>
+                    <canvas id="newUsersMonthlyChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="growth-rate">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>User Growth Rate - Monthly</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We can't measure if our growth is accelerating, stagnating, or declining month-over-month for investor/board reporting</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📈 User Growth Rate - Monthly</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>This shows the percentage change in new users compared to the previous month. It reveals if your growth is accelerating or slowing down.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Positive % = growth, Negative % = decline. A line trending upward means growth is accelerating!</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Investors and board members need to see if momentum is building or fading. This metric is crucial for fundraising and strategic planning.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Calculate % change: (current - previous) / previous * 100</code></p>
+                    </div>
+                    <canvas id="growthRateChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="dau">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Daily Active Users (DAU) - Last 30 Days</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We have no visibility into daily engagement patterns or which days/features drive the most activity</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📈 Daily Active Users (DAU)</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>The number of unique users who posted or commented each day over the last 30 days. This measures actual platform engagement, not just sign-ups.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Look for patterns: Are weekdays busier? Are there spikes after feature launches or marketing campaigns?</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without daily metrics, you can't identify which days/times are most active or detect problems like sudden drop-offs in engagement.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>COUNT DISTINCT users from posts + comments per day</code></p>
+                    </div>
+                    <canvas id="dauChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="mau">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Monthly Active Users (MAU)</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We can't tell if users are actually using our platform regularly or just signing up and abandoning it</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📈 Monthly Active Users (MAU)</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Monthly count of unique users who actually used the platform (posted or commented), not just signed up.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>This is your "stickiness" metric. Higher MAU means more users returning regularly. Compare to total sign-ups to see retention rate.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Sign-ups don't equal success. MAU reveals if users find value and keep coming back, or if they register and abandon the platform.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>COUNT DISTINCT users with posts OR comments per month</code></p>
+                    </div>
+                    <canvas id="mauChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="mau-country">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>MAU by Country</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We can't tell if users are actually using our platform regularly or just signing up and abandoning it</span>
+                    </div>
+                    <div class="pain-point" style="background: linear-gradient(135deg, #ffe9a6 0%, #ffd966 100%); border-left-color: #ff9800;">
+                        <span class="pain-icon">⚠️</span>
+                        <span class="pain-text"><strong>Database Limitation:</strong> Location data is in ChemLink DB but engagement data (posts/comments) is in Engagement DB with separate person IDs. Currently showing "Unknown" for all users until databases are synced.</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🌍 MAU by Country</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Breakdown of Monthly Active Users by their country. Shows geographic distribution of your engaged user base.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Identify which countries have the strongest user engagement. This helps target marketing and localization efforts.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without geographic data, you can't prioritize which markets to invest in or identify untapped opportunities.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Cross-database join: Engagement DB (activity) + ChemLink DB (locations)</code></p>
+                        <h4>🚫 Current Limitation</h4>
+                        <p>Person IDs don't match between databases. Requires data sync or unified ID system.</p>
+                    </div>
+                    <canvas id="mauByCountryChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Engagement -->
+        <section class="metrics-section category-engagement">
+            <div class="category-header">
+                <h2>👥 User Engagement & Social Activity</h2>
+                <p class="category-description">Measure community interactions and content performance</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="post-frequency">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Post Frequency - Daily (Last 30 Days)</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We can't tell if our platform is gaining momentum or if community activity is declining over time</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📝 Post Frequency - Daily</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Number of posts created each day and how many unique users posted. Tracks content creation momentum.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Upward trend = growing activity. Flat or declining = engagement problem. Check if marketing campaigns or features cause spikes.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Can't tell if your platform is gaining traction or losing steam. Essential for detecting early warning signs of declining engagement.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>COUNT posts per day + COUNT DISTINCT posters</code></p>
+                    </div>
+                    <canvas id="postFrequencyChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="engagement-rate">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Post Engagement Rate by Type</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't know if our community features are creating meaningful interactions or just noise</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">💬 Post Engagement Rate by Type</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>How many comments each post type gets on average. Shows which content drives the most discussion.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Higher engagement rate = content resonates with users. Use this to guide content strategy and feature development.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without engagement data, you're building features blindly. This shows what actually creates value and community interaction.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Comments per post by content type</code></p>
+                    </div>
+                    <canvas id="engagementRateChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="content-type">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Content Type Distribution</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't know if our community features are creating meaningful interactions or just noise</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📊 Content Type Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Breakdown of what types of content users are posting (text, images, links, etc.). Shows content preferences.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Large slices = popular content types. Compare to engagement rates to see if popular = engaging.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Helps understand if users are using all features or just a subset. Critical for feature investment decisions.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>COUNT posts GROUP BY type</code></p>
+                    </div>
+                    <canvas id="contentTypeChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="active-posters">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Top 10 Active Posters</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We need to identify and nurture our most valuable community contributors for platform growth</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🏆 Top 10 Active Posters</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Your top contributors ranked by engagement score (posts + comments weighted). These are your community champions.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Power Users (purple) are critical to platform health. Nurture them with recognition, early features, or partnership opportunities.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>10% of users drive 90% of content. Identify and retain these power users or risk losing your entire community.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Engagement score = posts*3 + comments*2</code></p>
+                    </div>
+                    <canvas id="activePostersChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Metrics -->
+        <section class="metrics-section category-profile">
+            <div class="category-header">
+                <h2>👤 Profile Quality Metrics</h2>
+                <p class="category-description">Monitor user profile completeness and data freshness</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="profile-completion">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Profile Completion Score Distribution</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">✅ Profile Completion Score Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>How complete users' profiles are (0-7 scale: headline, LinkedIn, location, company, experience, education, languages). Higher = better quality.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Most users at 7 = great! Many at 0-2 = onboarding problem. Target campaigns to nudge incomplete profiles.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Incomplete profiles break AI matching and make the platform less valuable. Both recruiters and job seekers get frustrated with poor match quality.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Sum of 7 profile completeness indicators</code></p>
+                    </div>
+                    <canvas id="profileCompletionChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="profile-status">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Profile Status Breakdown</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📊 Profile Status Breakdown</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>User segments: FINDER_ENABLED (AI-powered), BUILDER_ONLY (basic profile), BASIC_PROFILE (minimal data). Shows feature adoption.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>FINDER_ENABLED = premium users with full AI features. Goal is to move users up this ladder through onboarding and engagement.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Users stuck at BASIC_PROFILE don't get value and will churn. This shows how many users need profile improvement campaigns.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Categorize by embedding count and experience/education data</code></p>
+                    </div>
+                    <canvas id="profileStatusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="profile-freshness">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Profile Update Freshness</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Stale profiles make our talent database less valuable - we need to encourage users to keep information current</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔄 Profile Update Freshness</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>How long ago users last updated their profiles. FRESH (<3mo), AGING (3-6mo), STALE (6+ mo). Shows data currency.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High STALE count = problem. Users change jobs, learn skills, but profiles don't reflect it. Send update reminders to stale profiles.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Stale profiles mean bad matches, frustrated users, and wasted recruiter time. Your database value decays over time without updates.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Days since last profile update: CURRENT_DATE - updated_at</code></p>
+                    </div>
+                    <canvas id="profileFreshnessChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Posts Table -->
+        <section class="metrics-section category-engagement">
+            <h2>🏆 Top Performing Posts (Last 30 Days)</h2>
+            <div class="pain-point">
+                <span class="pain-icon">💡</span>
+                <span class="pain-text">We don't know if valuable content is actually being seen by our community or getting buried</span>
+            </div>
+            <div class="table-container">
+                <table id="topPostsTable">
+                    <thead>
+                        <tr>
+                            <th>Post Preview</th>
+                            <th>Author</th>
+                            <th>Type</th>
+                            <th>Comments</th>
+                            <th>Unique Commenters</th>
+                            <th>Days Old</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="6" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 ChemLink Analytics Dashboard | Data refreshed in real-time</p>
+        </footer>
+    </div>
+
+    <!-- SQL Query Modal -->
+    <div id="sqlModal" class="sql-modal">
+        <div class="sql-modal-content">
+            <div class="sql-modal-header">
+                <h2 id="sqlModalTitle">SQL Query</h2>
+                <span class="sql-modal-close" onclick="closeSQLModal()">&times;</span>
+            </div>
+            <div class="sql-modal-body">
+                <div class="sql-database" id="sqlDatabase"></div>
+                <pre><code id="sqlQueryCode" class="language-sql"></code></pre>
+            </div>
+            <div class="sql-modal-footer">
+                <button class="copy-sql-btn" onclick="copySQLToClipboard()">📋 Copy to Clipboard</button>
+                <button class="close-btn" onclick="closeSQLModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sql-modal.js') }}"></script>
+</body>
+</html>
