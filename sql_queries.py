@@ -217,5 +217,35 @@ ORDER BY profile_completeness_score;"""
 FROM persons
 WHERE deleted_at IS NULL
 ORDER BY days_since_update DESC;"""
+    },
+    "job_listings_growth": {
+        "name": "Job Listings Growth",
+        "database": "Engagement DB",
+        "query": """SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as job_posts,
+    COUNT(DISTINCT person_id) as unique_posters
+FROM posts
+WHERE deleted_at IS NULL
+  AND type ILIKE '%job%'
+GROUP BY DATE_TRUNC('month', created_at)
+ORDER BY month DESC;"""
+    },
+    "top_job_categories": {
+        "name": "Top Job Categories",
+        "database": "Engagement DB",
+        "query": """SELECT 
+    type as job_category,
+    COUNT(*) as job_count,
+    COUNT(DISTINCT person_id) as unique_posters,
+    COUNT(CASE WHEN link_url IS NOT NULL THEN 1 END) as jobs_with_external_links,
+    AVG(CHAR_LENGTH(content)) as avg_description_length,
+    MIN(created_at) as first_posted,
+    MAX(created_at) as last_posted
+FROM posts
+WHERE deleted_at IS NULL
+  AND type ILIKE '%job%'
+GROUP BY type
+ORDER BY job_count DESC;"""
     }
 }

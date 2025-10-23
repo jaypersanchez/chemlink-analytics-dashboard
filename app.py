@@ -530,6 +530,50 @@ def profile_update_frequency():
     return jsonify(results)
 
 # ============================================================================
+# JOB ANALYTICS ROUTES
+# ============================================================================
+
+@app.route('/api/jobs/listings-growth')
+def job_listings_growth():
+    """Get job postings growth over time"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as job_posts,
+            COUNT(DISTINCT person_id) as unique_posters
+        FROM posts
+        WHERE deleted_at IS NULL
+          AND type ILIKE '%job%'
+        GROUP BY DATE_TRUNC('month', created_at)
+        ORDER BY month DESC;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/jobs/top-categories')
+def top_job_categories():
+    """Get top job categories/types"""
+    query = """
+        SELECT 
+            type as job_category,
+            COUNT(*) as job_count,
+            COUNT(DISTINCT person_id) as unique_posters,
+            COUNT(CASE WHEN link_url IS NOT NULL THEN 1 END) as jobs_with_external_links,
+            ROUND(AVG(CHAR_LENGTH(content))) as avg_description_length,
+            MIN(created_at) as first_posted,
+            MAX(created_at) as last_posted
+        FROM posts
+        WHERE deleted_at IS NULL
+          AND type ILIKE '%job%'
+        GROUP BY type
+        ORDER BY job_count DESC;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+# ============================================================================
 # METADATA & SQL QUERIES ENDPOINTS
 # ============================================================================
 
@@ -646,6 +690,25 @@ def metrics_metadata():
                         "name": "Profile Update Freshness",
                         "pain_point": "Stale profiles make our talent database less valuable - we need to encourage users to keep information current",
                         "endpoint": "/api/profile/update-frequency"
+                    }
+                ]
+            },
+            {
+                "id": "jobs",
+                "name": "Job Analytics",
+                "description": "Track job posting activity and categorization",
+                "metrics": [
+                    {
+                        "id": "job_listings_growth",
+                        "name": "Job Listings Growth",
+                        "pain_point": "We need visibility into job posting trends to understand platform value for employers and measure marketplace health",
+                        "endpoint": "/api/jobs/listings-growth"
+                    },
+                    {
+                        "id": "top_job_categories",
+                        "name": "Top Job Categories",
+                        "pain_point": "Understanding which job types dominate helps us tailor features and marketing to actual market demand",
+                        "endpoint": "/api/jobs/top-categories"
                     }
                 ]
             }

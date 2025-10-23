@@ -792,6 +792,162 @@ async function loadProfileFreshnessChart() {
 }
 
 // =============================================================================
+// JOB ANALYTICS CHARTS
+// =============================================================================
+async function loadJobListingsGrowthChart() {
+    const data = await fetchData('jobs/listings-growth');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('jobListingsGrowthChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => formatDate(d.month)).reverse(),
+            datasets: [
+                {
+                    label: 'Job Posts',
+                    data: data.map(d => d.job_posts).reverse(),
+                    borderColor: '#6a1b9a',
+                    backgroundColor: 'rgba(106, 27, 154, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Unique Posters',
+                    data: data.map(d => d.unique_posters).reverse(),
+                    borderColor: '#00796b',
+                    backgroundColor: 'rgba(0, 121, 107, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return '📈 Job Listings Growth\n' + context[0].label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadTopJobCategoriesChart() {
+    const data = await fetchData('jobs/top-categories');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('topJobCategoriesChart');
+    if (!ctx) return;
+
+    // Take top 10 categories
+    const topCategories = data.slice(0, 10);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topCategories.map(d => d.job_category || 'Unknown'),
+            datasets: [{
+                label: 'Job Count',
+                data: topCategories.map(d => d.job_count),
+                backgroundColor: [
+                    'rgba(106, 27, 154, 0.7)',
+                    'rgba(156, 39, 176, 0.7)',
+                    'rgba(142, 36, 170, 0.7)',
+                    'rgba(123, 31, 162, 0.7)',
+                    'rgba(171, 71, 188, 0.7)',
+                    'rgba(186, 104, 200, 0.7)',
+                    'rgba(149, 117, 205, 0.7)',
+                    'rgba(179, 136, 255, 0.7)',
+                    'rgba(209, 196, 233, 0.7)',
+                    'rgba(225, 190, 231, 0.7)'
+                ],
+                borderColor: '#6a1b9a',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return '🏷️ Top Job Categories\n' + context[0].label;
+                        },
+                        afterBody: function(context) {
+                            const index = context[0].dataIndex;
+                            const item = topCategories[index];
+                            return [
+                                `Unique Posters: ${item.unique_posters}`,
+                                `With External Links: ${item.jobs_with_external_links}`,
+                                `Avg Description Length: ${Math.round(item.avg_description_length)} chars`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Job Posts',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Job Category',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
 // TOP POSTS TABLE
 // =============================================================================
 async function loadTopPostsTable() {
@@ -845,6 +1001,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadProfileCompletionChart();
     loadProfileStatusChart();
     loadProfileFreshnessChart();
+    
+    // Job analytics
+    loadJobListingsGrowthChart();
+    loadTopJobCategoriesChart();
     
     // Tables
     loadTopPostsTable();

@@ -313,6 +313,59 @@
             </div>
         </section>
 
+        <!-- Job Analytics -->
+        <section class="metrics-section category-jobs">
+            <div class="category-header">
+                <h2>💼 Job Analytics</h2>
+                <p class="category-description">Track job posting activity and categorization</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="job-listings-growth">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Job Listings Growth</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We need visibility into job posting trends to understand platform value for employers and measure marketplace health</span>
+                    </div>
+                    <button class="sql-button" onclick="showSQLModal('job_listings_growth')">💾 SQL</button>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📈 Job Listings Growth</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Monthly count of job postings and unique employers posting jobs. Tracks marketplace supply side.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Upward trend = platform attracting more employers. Flat/declining = need employer acquisition campaigns.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without job posting data, you can't measure if you're building a valuable marketplace for employers or just a job seeker community.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>COUNT posts WHERE type ILIKE '%job%' GROUP BY month</code></p>
+                    </div>
+                    <canvas id="jobListingsGrowthChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="top-job-categories">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Top Job Categories</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Understanding which job types dominate helps us tailor features and marketing to actual market demand</span>
+                    </div>
+                    <button class="sql-button" onclick="showSQLModal('top_job_categories')">💾 SQL</button>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🏷️ Top Job Categories</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Distribution of job types being posted. Shows which industries/roles dominate your marketplace.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Top categories = where you have the most supply. Compare to user demographics to identify gaps or opportunities.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Can't optimize features or marketing without knowing what jobs employers actually post. This shows real market demand.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>GROUP BY job type with post counts and external link tracking</code></p>
+                    </div>
+                    <canvas id="topJobCategoriesChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <!-- Top Posts Table -->
         <section class="metrics-section category-engagement">
             <h2>🏆 Top Performing Posts (Last 30 Days)</h2>
