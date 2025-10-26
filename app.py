@@ -62,13 +62,14 @@ def new_users_weekly():
 
 @app.route('/api/new-users/monthly')
 def new_users_monthly():
-    """Get new user sign-ups by month"""
+    """Get new user sign-ups by month (rolling 12 months)"""
     query = """
         SELECT 
             DATE_TRUNC('month', created_at) as month,
             COUNT(*) as new_users
         FROM persons 
         WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
         GROUP BY month 
         ORDER BY month DESC;
     """
@@ -102,12 +103,14 @@ def growth_rate_weekly():
 
 @app.route('/api/growth-rate/monthly')
 def growth_rate_monthly():
-    """Get monthly growth rate"""
+    """Get monthly growth rate (rolling 12 months)"""
     query = """
         WITH monthly_users AS (
             SELECT DATE_TRUNC('month', created_at) as month,
                    COUNT(*) as new_users
-            FROM persons WHERE deleted_at IS NULL
+            FROM persons 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             GROUP BY month
         )
         SELECT 
