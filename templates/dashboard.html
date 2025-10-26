@@ -252,7 +252,7 @@
                     <h3>Profile Completion Score Distribution</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters</span>
+                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for users</span>
                     </div>
                     <div class="chart-tooltip">
                         <h3 class="tooltip-title">✅ Profile Completion Score Distribution</h3>
@@ -261,7 +261,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>Most users at 7 = great! Many at 0-2 = onboarding problem. Target campaigns to nudge incomplete profiles.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Incomplete profiles break AI matching and make the platform less valuable. Both recruiters and job seekers get frustrated with poor match quality.</p>
+                        <p>Incomplete profiles break AI matching and make the platform less valuable. Users get frustrated with poor match quality.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>Sum of 7 profile completeness indicators</code></p>
                     </div>
@@ -272,7 +272,7 @@
                     <h3>Profile Status Breakdown</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters</span>
+                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for users</span>
                     </div>
                     <div class="chart-tooltip">
                         <h3 class="tooltip-title">📊 Profile Status Breakdown</h3>
@@ -281,7 +281,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>FINDER_ENABLED = premium users with full AI features. Goal is to move users up this ladder through onboarding and engagement.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Users stuck at BASIC_PROFILE don't get value and will churn. This shows how many users need profile improvement campaigns.</p>
+                        <p>Users stuck at BASIC_PROFILE don't get full platform value and may churn. This shows how many users need profile improvement campaigns.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>Categorize by embedding count and experience/education data</code></p>
                     </div>
@@ -295,7 +295,7 @@
                     <h3>Profile Update Freshness</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Stale profiles make our talent database less valuable - we need to encourage users to keep information current</span>
+                        <span class="pain-text">Stale profiles mean bad matches and frustrated users. Your database value decays over time without updates.</span>
                     </div>
                     <div class="chart-tooltip">
                         <h3 class="tooltip-title">🔄 Profile Update Freshness</h3>
@@ -326,7 +326,7 @@
                     <h3>Top Companies</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">We don't know if we're attracting talent from premium companies or if our network is high-quality enough to attract employers</span>
+                        <span class="pain-text">We don't know if we're attracting talent from premium companies or if our network quality is sufficient</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('top_companies')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -336,7 +336,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>Top-tier companies (Google, Amazon, etc.) = premium network. Unknown companies = need better talent acquisition strategy.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Without knowing company distribution, you can't prove network quality to recruiters or identify partnership opportunities.</p>
+                        <p>Without knowing company distribution, you can't prove network quality or identify partnership opportunities.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>companies JOIN persons/experiences</code></p>
                     </div>
@@ -347,7 +347,7 @@
                     <h3>Top Roles/Job Titles</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Without knowing what roles our users have, we can't build features that match their needs or target the right employers</span>
+                        <span class="pain-text">Without knowing what roles our users have, we can't build features that match their needs</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('top_roles')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -371,7 +371,7 @@
                     <h3>Education Distribution</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Can't prove to recruiters that our talent pool is high-quality without showing education credentials and top schools</span>
+                        <span class="pain-text">Understanding education credentials and top schools helps prove our talent pool is high-quality</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('education_distribution')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -381,7 +381,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>High PhD count = research-heavy network. Mostly Bachelor's = early-career focus. Use for recruiting positioning.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Recruiters won't pay for access without proof of credential quality. This shows you have verified, educated talent.</p>
+                        <p>This shows you have verified, educated talent in your network.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>degrees JOIN education</code></p>
                     </div>
@@ -416,7 +416,7 @@
                     <h3>Top Skills & Projects</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Don't know what kind of work our users do or if they're doing cutting-edge projects that would attract premium employers</span>
+                        <span class="pain-text">Don't know what kind of work our users do or if they're doing cutting-edge projects</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('top_skills_projects')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -426,7 +426,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>Cutting-edge projects (AI, ML, etc.) = premium talent. Generic projects = commodity skills. Use for employer pitch.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Can't sell employer access without showing your network does valuable, relevant work in their domain.</p>
+                        <p>Understanding what valuable, relevant work your network does helps inform platform strategy.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>projects table</code></p>
                     </div>

@@ -584,3 +584,23 @@ footer {
 .close-btn:hover {
     background: #d0d0d0;
 }
+
+/* ============================================================================
+   HIDDEN ELEMENTS - Can be unhidden later by removing these rules
+   ============================================================================ */
+
+/* Hide PII - Top Active Posters Chart */
+#activePostersChart {
+    display: none !important;
+}
+
+/* Hide the entire chart container for Top Active Posters */
+.chart-container[data-tooltip="active-posters"] {
+    display: none !important;
+}
+
+/* Hide PII - Top Performing Posts Table */
+.metrics-section.category-engagement section:has(#topPostsTable),
+section:has(#topPostsTable) {
+    display: none !important;
+}
