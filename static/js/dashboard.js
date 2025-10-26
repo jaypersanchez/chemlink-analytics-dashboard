@@ -449,6 +449,9 @@ async function loadEngagementRateChart() {
     const data = await fetchData('engagement/post-engagement-rate');
     if (!data || data.length === 0) return;
 
+    // Check if all engagement rates are 0
+    const hasEngagement = data.some(d => parseFloat(d.avg_comments_per_post) > 0);
+    
     const ctx = document.getElementById('engagementRateChart').getContext('2d');
     new Chart(ctx, {
         type: 'bar',
@@ -484,6 +487,8 @@ async function loadEngagementRateChart() {
                 },
                 y: { 
                     beginAtZero: true,
+                    min: 0,
+                    max: hasEngagement ? undefined : 1,  // Force max to 1 if no engagement to show scale
                     title: {
                         display: true,
                         text: 'Average Comments per Post',
