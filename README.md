@@ -5,8 +5,8 @@ A comprehensive analytics dashboard for visualizing ChemLink platform metrics in
 ## Features
 
 ### Growth Metrics
-- **New Users**: Daily, weekly, and monthly user sign-ups
-- **User Growth Rate**: Month-over-month and week-over-week growth percentages
+- **New Users**: Daily, weekly, and monthly user sign-ups (monthly shows rolling 12 months)
+- **User Growth Rate**: Month-over-month growth percentages (rolling 12 months)
 - **Daily Active Users (DAU)**: Users who posted or commented each day
 - **Weekly Active Users (WAU)**: Active users aggregated by week
 - **Monthly Active Users (MAU)**: Active users by month with country breakdown
@@ -15,8 +15,8 @@ A comprehensive analytics dashboard for visualizing ChemLink platform metrics in
 - **Post Frequency**: Daily posting activity trends
 - **Post Engagement Rate**: Comments per post by content type
 - **Content Type Distribution**: Breakdown of post types (text, link, image, etc.)
-- **Active Posters**: Top contributors by engagement score
-- **Top Performing Posts**: Posts with highest engagement in last 30 days
+- **Active Posters**: Top contributors by engagement score (HIDDEN - contains PII)
+- **Top Performing Posts**: Posts with highest engagement in last 30 days (HIDDEN - contains PII)
 
 ### Profile Metrics
 - **Profile Completion Rate**: Distribution of profile completeness scores
@@ -148,6 +148,9 @@ Edit `static/js/dashboard.js` and modify the `colors` object at the top of the f
 - All dates are displayed in user's local timezone
 - Charts are responsive and work on mobile devices
 - Data is cached in browser for better performance
+- **Monthly metrics show rolling 12-month window** for relevance
+- **PII elements are hidden via CSS** - can be unhidden by removing CSS rules in `static/css/styles.css`
+- **Job-related references removed** from pain points to focus on core platform value
 
 ## Security
 

@@ -28,8 +28,8 @@ Location: `sql_queries.py`
 ## Current Metrics Coverage
 
 ### Growth Metrics (5)
-1. **New Users - Monthly Trend** - Marketing effectiveness
-2. **User Growth Rate** - MoM growth percentage
+1. **New Users - Monthly Trend** - Marketing effectiveness (rolling 12 months)
+2. **User Growth Rate** - MoM growth percentage (rolling 12 months)
 3. **Daily Active Users (DAU)** - Daily engagement patterns
 4. **Monthly Active Users (MAU)** - Platform stickiness
 5. **MAU by Country** - Geographic distribution (⚠️ has known limitation)
@@ -38,8 +38,8 @@ Location: `sql_queries.py`
 6. **Post Frequency** - Content creation momentum
 7. **Post Engagement Rate** - Which content types drive discussion
 8. **Content Type Distribution** - User content preferences
-9. **Top Active Posters** - Community power users
-10. **Top Performing Posts** - Viral content identification
+9. **Top Active Posters** - Community power users (⚠️ HIDDEN - contains PII)
+10. **Top Performing Posts** - Viral content identification (⚠️ HIDDEN - contains PII)
 
 ### Profile Metrics (3)
 11. **Profile Completion Score** - Data quality indicator
@@ -88,7 +88,20 @@ Location: `sql_queries.py`
 **Issue**: Many engagement rates show 0%  
 **Root Cause**: UAT/staging environment has limited test data  
 **Impact**: Charts render but show zeros  
-**Solution**: Will show real data in production  
+**Solution**: Will show real data in production
+
+### 3. PII Elements Hidden
+**Status**: Intentionally hidden via CSS  
+**Elements**: Top Active Posters chart, Top Performing Posts table  
+**Reason**: Client demo should not show user names/emails  
+**Unhide**: Remove CSS rules in `static/css/styles.css` (search "HIDDEN ELEMENTS")  
+**Note**: Backend logic remains intact - only display is hidden
+
+### 4. Single Month Data
+**Issue**: Charts show only October 2025  
+**Root Cause**: All users have `created_at` in October 2025  
+**Impact**: Growth rate shows null, trends appear flat  
+**Solution**: Will improve as real data accumulates month-over-month
 
 ## What Needs to Happen Next
 
@@ -172,9 +185,27 @@ static/css/         # Styling
 4. **Extensible**: Adding new metrics follows clear pattern
 5. **Transparent**: No black box - all queries visible
 
+## Recent Changes (October 27, 2025)
+
+### Query Updates
+- **Monthly metrics now show rolling 12-month window** instead of all-time data
+- Queries updated: `/api/new-users/monthly` and `/api/growth-rate/monthly`
+- More relevant for ongoing analysis and keeps dashboard focused
+
+### PII Protection
+- **Hidden elements**: Top Active Posters chart and Top Performing Posts table
+- Implementation: CSS `display: none` (easily reversible)
+- Reason: Client presentation should not expose user names
+- Backend unchanged: All APIs still return full data
+
+### Content Adjustments
+- Removed job-related references (recruiters, job seekers, employers) from pain points
+- Refocused messaging on core platform value and user experience
+- More appropriate for current demo/presentation context
+
 ## Notes from Data Architect
 
-This dashboard represents the **minimum viable analytics foundation**. The architecture is solid and the queries are production-tested. 
+This dashboard represents the **minimum viable analytics foundation**. The architecture is solid and the queries are production-tested.
 
 **What I've validated:**
 - All queries run successfully on staging data
