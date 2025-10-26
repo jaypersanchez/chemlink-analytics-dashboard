@@ -139,15 +139,19 @@ async function loadGrowthRateChart() {
     if (!data || data.length === 0) return;
 
     const ctx = document.getElementById('growthRateChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.reverse().map(d => formatMonth(d.month)),
+            labels: sortedData.map(d => formatMonth(d.month)),
             datasets: [{
                 label: 'Growth Rate %',
-                data: data.map(d => d.growth_rate_pct || 0),
-                backgroundColor: data.map(d => 
-                    (d.growth_rate_pct || 0) >= 0 ? colors.success : colors.danger
+                data: sortedData.map(d => d.growth_rate_pct !== null ? d.growth_rate_pct : 0),
+                backgroundColor: sortedData.map(d => 
+                    (d.growth_rate_pct !== null && d.growth_rate_pct >= 0) ? colors.success : 
+                    (d.growth_rate_pct !== null && d.growth_rate_pct < 0) ? colors.danger : 
+                    '#ccc'
                 ),
                 borderWidth: 0
             }]
