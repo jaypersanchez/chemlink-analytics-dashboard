@@ -530,46 +530,113 @@ def profile_update_frequency():
     return jsonify(results)
 
 # ============================================================================
-# JOB ANALYTICS ROUTES
+# TALENT MARKETPLACE INTELLIGENCE ROUTES
 # ============================================================================
 
-@app.route('/api/jobs/listings-growth')
-def job_listings_growth():
-    """Get job postings growth over time"""
+@app.route('/api/talent/top-companies')
+def top_companies():
+    """Get top companies by user count"""
     query = """
         SELECT 
-            DATE_TRUNC('month', created_at) as month,
-            COUNT(*) as job_posts,
-            COUNT(DISTINCT person_id) as unique_posters
-        FROM posts
-        WHERE deleted_at IS NULL
-          AND type ILIKE '%job%'
-        GROUP BY DATE_TRUNC('month', created_at)
-        ORDER BY month DESC;
+            c.name as company_name,
+            COUNT(DISTINCT p.id) as user_count,
+            COUNT(DISTINCT e.id) as total_experiences,
+            STRING_AGG(DISTINCT l.country, ', ') as countries
+        FROM companies c
+        LEFT JOIN persons p ON c.id = p.company_id AND p.deleted_at IS NULL
+        LEFT JOIN experiences e ON c.id = e.company_id AND e.deleted_at IS NULL
+        LEFT JOIN locations l ON c.location_id = l.id
+        WHERE c.deleted_at IS NULL
+          AND (p.id IS NOT NULL OR e.id IS NOT NULL)
+        GROUP BY c.id, c.name
+        ORDER BY user_count DESC, total_experiences DESC
+        LIMIT 20;
     """
-    conn = get_engagement_db_connection()
+    conn = get_chemlink_db_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
-@app.route('/api/jobs/top-categories')
-def top_job_categories():
-    """Get top job categories/types"""
+@app.route('/api/talent/top-roles')
+def top_roles():
+    """Get top roles/job titles"""
     query = """
         SELECT 
-            type as job_category,
-            COUNT(*) as job_count,
-            COUNT(DISTINCT person_id) as unique_posters,
-            COUNT(CASE WHEN link_url IS NOT NULL THEN 1 END) as jobs_with_external_links,
-            ROUND(AVG(CHAR_LENGTH(content))) as avg_description_length,
-            MIN(created_at) as first_posted,
-            MAX(created_at) as last_posted
-        FROM posts
-        WHERE deleted_at IS NULL
-          AND type ILIKE '%job%'
-        GROUP BY type
-        ORDER BY job_count DESC;
+            r.title as role_title,
+            COUNT(DISTINCT e.person_id) as user_count,
+            COUNT(DISTINCT e.company_id) as companies_count,
+            ROUND(AVG(EXTRACT(YEAR FROM COALESCE(e.end_date, CURRENT_DATE)) - 
+                  EXTRACT(YEAR FROM e.start_date)), 1) as avg_years_in_role
+        FROM roles r
+        JOIN experiences e ON r.id = e.role_id
+        WHERE r.deleted_at IS NULL
+          AND e.deleted_at IS NULL
+        GROUP BY r.id, r.title
+        ORDER BY user_count DESC
+        LIMIT 20;
     """
-    conn = get_engagement_db_connection()
+    conn = get_chemlink_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/talent/education-distribution')
+def education_distribution():
+    """Get education/degree distribution"""
+    query = """
+        SELECT 
+            d.name as degree_type,
+            COUNT(DISTINCT ed.person_id) as user_count,
+            COUNT(DISTINCT ed.school_id) as schools_count
+        FROM degrees d
+        JOIN education ed ON d.id = ed.degree_id
+        WHERE d.deleted_at IS NULL
+          AND ed.deleted_at IS NULL
+        GROUP BY d.id, d.name
+        ORDER BY user_count DESC;
+    """
+    conn = get_chemlink_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/talent/geographic-distribution')
+def geographic_distribution():
+    """Get user distribution by country"""
+    query = """
+        SELECT 
+            COALESCE(l.country, 'Unknown') as country,
+            COUNT(DISTINCT p.id) as user_count,
+            COUNT(DISTINCT p.company_id) as companies_count,
+            ROUND(COUNT(DISTINCT p.id) * 100.0 / 
+                  (SELECT COUNT(*) FROM persons WHERE deleted_at IS NULL), 2) as percentage
+        FROM persons p
+        LEFT JOIN locations l ON p.location_id = l.id
+        WHERE p.deleted_at IS NULL
+        GROUP BY l.country
+        ORDER BY user_count DESC
+        LIMIT 15;
+    """
+    conn = get_chemlink_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/talent/top-skills-projects')
+def top_skills_projects():
+    """Get top skills and project types"""
+    query = """
+        SELECT 
+            pr.name as project_name,
+            LEFT(pr.description, 100) as project_description,
+            COUNT(DISTINCT pr.person_id) as user_count,
+            MIN(pr.start_date) as first_project,
+            MAX(COALESCE(pr.end_date, CURRENT_DATE)) as last_project
+        FROM projects pr
+        WHERE pr.deleted_at IS NULL
+          AND pr.name IS NOT NULL
+        GROUP BY pr.name, pr.description
+        HAVING COUNT(DISTINCT pr.person_id) > 1
+        ORDER BY user_count DESC
+        LIMIT 20;
+    """
+    conn = get_chemlink_db_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -694,21 +761,39 @@ def metrics_metadata():
                 ]
             },
             {
-                "id": "jobs",
-                "name": "Job Analytics",
-                "description": "Track job posting activity and categorization",
+                "id": "talent",
+                "name": "Talent Marketplace Intelligence",
+                "description": "Understand who's on your platform and what they offer",
                 "metrics": [
                     {
-                        "id": "job_listings_growth",
-                        "name": "Job Listings Growth",
-                        "pain_point": "We need visibility into job posting trends to understand platform value for employers and measure marketplace health",
-                        "endpoint": "/api/jobs/listings-growth"
+                        "id": "top_companies",
+                        "name": "Top Companies",
+                        "pain_point": "We don't know if we're attracting talent from premium companies or if our network is high-quality enough to attract employers",
+                        "endpoint": "/api/talent/top-companies"
                     },
                     {
-                        "id": "top_job_categories",
-                        "name": "Top Job Categories",
-                        "pain_point": "Understanding which job types dominate helps us tailor features and marketing to actual market demand",
-                        "endpoint": "/api/jobs/top-categories"
+                        "id": "top_roles",
+                        "name": "Top Roles/Job Titles",
+                        "pain_point": "Without knowing what roles our users have, we can't build features that match their needs or target the right employers",
+                        "endpoint": "/api/talent/top-roles"
+                    },
+                    {
+                        "id": "education_distribution",
+                        "name": "Education Distribution",
+                        "pain_point": "Can't prove to recruiters that our talent pool is high-quality without showing education credentials and top schools",
+                        "endpoint": "/api/talent/education-distribution"
+                    },
+                    {
+                        "id": "geographic_distribution",
+                        "name": "Geographic Distribution",
+                        "pain_point": "We're spending marketing budget blindly without knowing where our users are concentrated or which markets to prioritize",
+                        "endpoint": "/api/talent/geographic-distribution"
+                    },
+                    {
+                        "id": "top_skills_projects",
+                        "name": "Top Skills & Projects",
+                        "pain_point": "Don't know what kind of work our users do or if they're doing cutting-edge projects that would attract premium employers",
+                        "endpoint": "/api/talent/top-skills-projects"
                     }
                 ]
             }

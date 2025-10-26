@@ -218,34 +218,86 @@ FROM persons
 WHERE deleted_at IS NULL
 ORDER BY days_since_update DESC;"""
     },
-    "job_listings_growth": {
-        "name": "Job Listings Growth",
-        "database": "Engagement DB",
+    "top_companies": {
+        "name": "Top Companies",
+        "database": "ChemLink DB",
         "query": """SELECT 
-    DATE_TRUNC('month', created_at) as month,
-    COUNT(*) as job_posts,
-    COUNT(DISTINCT person_id) as unique_posters
-FROM posts
-WHERE deleted_at IS NULL
-  AND type ILIKE '%job%'
-GROUP BY DATE_TRUNC('month', created_at)
-ORDER BY month DESC;"""
+    c.name as company_name,
+    COUNT(DISTINCT p.id) as user_count,
+    COUNT(DISTINCT e.id) as total_experiences,
+    STRING_AGG(DISTINCT l.country, ', ') as countries
+FROM companies c
+LEFT JOIN persons p ON c.id = p.company_id AND p.deleted_at IS NULL
+LEFT JOIN experiences e ON c.id = e.company_id AND e.deleted_at IS NULL
+LEFT JOIN locations l ON c.location_id = l.id
+WHERE c.deleted_at IS NULL
+  AND (p.id IS NOT NULL OR e.id IS NOT NULL)
+GROUP BY c.id, c.name
+ORDER BY user_count DESC, total_experiences DESC
+LIMIT 20;"""
     },
-    "top_job_categories": {
-        "name": "Top Job Categories",
-        "database": "Engagement DB",
+    "top_roles": {
+        "name": "Top Roles/Job Titles",
+        "database": "ChemLink DB",
         "query": """SELECT 
-    type as job_category,
-    COUNT(*) as job_count,
-    COUNT(DISTINCT person_id) as unique_posters,
-    COUNT(CASE WHEN link_url IS NOT NULL THEN 1 END) as jobs_with_external_links,
-    AVG(CHAR_LENGTH(content)) as avg_description_length,
-    MIN(created_at) as first_posted,
-    MAX(created_at) as last_posted
-FROM posts
-WHERE deleted_at IS NULL
-  AND type ILIKE '%job%'
-GROUP BY type
-ORDER BY job_count DESC;"""
+    r.title as role_title,
+    COUNT(DISTINCT e.person_id) as user_count,
+    COUNT(DISTINCT e.company_id) as companies_count,
+    AVG(EXTRACT(YEAR FROM COALESCE(e.end_date, CURRENT_DATE)) - EXTRACT(YEAR FROM e.start_date)) as avg_years_in_role
+FROM roles r
+JOIN experiences e ON r.id = e.role_id
+WHERE r.deleted_at IS NULL
+  AND e.deleted_at IS NULL
+GROUP BY r.id, r.title
+ORDER BY user_count DESC
+LIMIT 20;"""
+    },
+    "education_distribution": {
+        "name": "Education Distribution",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    d.name as degree_type,
+    COUNT(DISTINCT ed.person_id) as user_count,
+    COUNT(DISTINCT ed.school_id) as schools_count,
+    STRING_AGG(DISTINCT s.name, ', ' ORDER BY s.name LIMIT 5) as top_schools
+FROM degrees d
+JOIN education ed ON d.id = ed.degree_id
+LEFT JOIN schools s ON ed.school_id = s.id
+WHERE d.deleted_at IS NULL
+  AND ed.deleted_at IS NULL
+GROUP BY d.id, d.name
+ORDER BY user_count DESC;"""
+    },
+    "geographic_distribution": {
+        "name": "Geographic Distribution",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    COALESCE(l.country, 'Unknown') as country,
+    COUNT(DISTINCT p.id) as user_count,
+    COUNT(DISTINCT p.company_id) as companies_count,
+    ROUND(COUNT(DISTINCT p.id) * 100.0 / (SELECT COUNT(*) FROM persons WHERE deleted_at IS NULL), 2) as percentage
+FROM persons p
+LEFT JOIN locations l ON p.location_id = l.id
+WHERE p.deleted_at IS NULL
+GROUP BY l.country
+ORDER BY user_count DESC
+LIMIT 15;"""
+    },
+    "top_skills_projects": {
+        "name": "Top Skills & Project Types",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    pr.name as project_name,
+    pr.description as project_description,
+    COUNT(DISTINCT pr.person_id) as user_count,
+    MIN(pr.start_date) as first_project,
+    MAX(COALESCE(pr.end_date, CURRENT_DATE)) as last_project
+FROM projects pr
+WHERE pr.deleted_at IS NULL
+  AND pr.name IS NOT NULL
+GROUP BY pr.name, pr.description
+HAVING COUNT(DISTINCT pr.person_id) > 1
+ORDER BY user_count DESC
+LIMIT 20;"""
     }
 }

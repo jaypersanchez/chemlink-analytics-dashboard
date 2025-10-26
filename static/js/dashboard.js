@@ -792,49 +792,219 @@ async function loadProfileFreshnessChart() {
 }
 
 // =============================================================================
-// JOB ANALYTICS CHARTS
+// TALENT MARKETPLACE INTELLIGENCE CHARTS  
 // =============================================================================
-async function loadJobListingsGrowthChart() {
-    const data = await fetchData('jobs/listings-growth');
+async function loadTopCompaniesChart() {
+    const data = await fetchData('talent/top-companies');
     if (!data || data.length === 0) return;
 
-    const ctx = document.getElementById('jobListingsGrowthChart');
+    const ctx = document.getElementById('topCompaniesChart');
+    if (!ctx) return;
+
+    const top10 = data.slice(0, 10);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: top10.map(d => d.company_name || 'Unknown'),
+            datasets: [{
+                label: 'User Count',
+                data: top10.map(d => d.user_count),
+                backgroundColor: 'rgba(0, 150, 136, 0.7)',
+                borderColor: '#00796b',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return '🏢 Top Companies\n' + context[0].label;
+                        },
+                        afterBody: function(context) {
+                            const index = context[0].dataIndex;
+                            const item = top10[index];
+                            return [
+                                `Total Experiences: ${item.total_experiences}`,
+                                `Countries: ${item.countries || 'N/A'}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Company',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadTopRolesChart() {
+    const data = await fetchData('talent/top-roles');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('topRolesChart');
+    if (!ctx) return;
+
+    const top10 = data.slice(0, 10);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: top10.map(d => d.role_title || 'Unknown'),
+            datasets: [{
+                label: 'User Count',
+                data: top10.map(d => d.user_count),
+                backgroundColor: 'rgba(63, 81, 181, 0.7)',
+                borderColor: '#3f51b5',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return '💼 Top Roles\n' + context[0].label;
+                        },
+                        afterBody: function(context) {
+                            const index = context[0].dataIndex;
+                            const item = top10[index];
+                            return [
+                                `Companies: ${item.companies_count}`,
+                                `Avg Years: ${item.avg_years_in_role ? Math.round(item.avg_years_in_role * 10) / 10 : 'N/A'}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Role',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadEducationDistributionChart() {
+    const data = await fetchData('talent/education-distribution');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('educationDistributionChart');
     if (!ctx) return;
 
     new Chart(ctx, {
-        type: 'line',
+        type: 'pie',
         data: {
-            labels: data.map(d => formatDate(d.month)).reverse(),
-            datasets: [
-                {
-                    label: 'Job Posts',
-                    data: data.map(d => d.job_posts).reverse(),
-                    borderColor: '#6a1b9a',
-                    backgroundColor: 'rgba(106, 27, 154, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.3
-                },
-                {
-                    label: 'Unique Posters',
-                    data: data.map(d => d.unique_posters).reverse(),
-                    borderColor: '#00796b',
-                    backgroundColor: 'rgba(0, 121, 107, 0.1)',
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.3
-                }
-            ]
+            labels: data.map(d => d.degree_type || 'Unknown'),
+            datasets: [{
+                data: data.map(d => d.user_count),
+                backgroundColor: [
+                    'rgba(156, 39, 176, 0.8)',
+                    'rgba(63, 81, 181, 0.8)',
+                    'rgba(0, 150, 136, 0.8)',
+                    'rgba(255, 152, 0, 0.8)',
+                    'rgba(244, 67, 54, 0.8)',
+                    'rgba(103, 58, 183, 0.8)'
+                ],
+                borderWidth: 2
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: true, position: 'top' },
+                legend: { position: 'right' },
                 tooltip: {
                     callbacks: {
                         title: function(context) {
-                            return '📈 Job Listings Growth\n' + context[0].label;
+                            return '🎓 Education Distribution\n' + context[0].label;
+                        },
+                        afterLabel: function(context) {
+                            const item = data[context.dataIndex];
+                            return `Schools: ${item.schools_count}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadGeographicDistributionChart() {
+    const data = await fetchData('talent/geographic-distribution');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('geographicDistributionChart');
+    if (!ctx) return;
+
+    const top10 = data.slice(0, 10);
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: top10.map(d => d.country),
+            datasets: [{
+                label: 'Users',
+                data: top10.map(d => d.user_count),
+                backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                borderColor: '#1976d2',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return '🌍 Geographic Distribution\n' + context[0].label;
+                        },
+                        afterBody: function(context) {
+                            const index = context[0].dataIndex;
+                            const item = top10[index];
+                            return [
+                                `Companies: ${item.companies_count}`,
+                                `Percentage: ${item.percentage}%`
+                            ];
                         }
                     }
                 }
@@ -843,7 +1013,7 @@ async function loadJobListingsGrowthChart() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Month',
+                        text: 'Country',
                         font: { size: 12, weight: 'bold' }
                     }
                 },
@@ -851,7 +1021,7 @@ async function loadJobListingsGrowthChart() {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Count',
+                        text: 'Number of Users',
                         font: { size: 12, weight: 'bold' }
                     },
                     ticks: {
@@ -865,36 +1035,24 @@ async function loadJobListingsGrowthChart() {
     });
 }
 
-async function loadTopJobCategoriesChart() {
-    const data = await fetchData('jobs/top-categories');
+async function loadTopSkillsProjectsChart() {
+    const data = await fetchData('talent/top-skills-projects');
     if (!data || data.length === 0) return;
 
-    const ctx = document.getElementById('topJobCategoriesChart');
+    const ctx = document.getElementById('topSkillsProjectsChart');
     if (!ctx) return;
 
-    // Take top 10 categories
-    const topCategories = data.slice(0, 10);
+    const top10 = data.slice(0, 10);
 
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: topCategories.map(d => d.job_category || 'Unknown'),
+            labels: top10.map(d => d.project_name || 'Unnamed Project'),
             datasets: [{
-                label: 'Job Count',
-                data: topCategories.map(d => d.job_count),
-                backgroundColor: [
-                    'rgba(106, 27, 154, 0.7)',
-                    'rgba(156, 39, 176, 0.7)',
-                    'rgba(142, 36, 170, 0.7)',
-                    'rgba(123, 31, 162, 0.7)',
-                    'rgba(171, 71, 188, 0.7)',
-                    'rgba(186, 104, 200, 0.7)',
-                    'rgba(149, 117, 205, 0.7)',
-                    'rgba(179, 136, 255, 0.7)',
-                    'rgba(209, 196, 233, 0.7)',
-                    'rgba(225, 190, 231, 0.7)'
-                ],
-                borderColor: '#6a1b9a',
+                label: 'Users with This Project',
+                data: top10.map(d => d.user_count),
+                backgroundColor: 'rgba(255, 152, 0, 0.7)',
+                borderColor: '#f57c00',
                 borderWidth: 2
             }]
         },
@@ -907,16 +1065,12 @@ async function loadTopJobCategoriesChart() {
                 tooltip: {
                     callbacks: {
                         title: function(context) {
-                            return '🏷️ Top Job Categories\n' + context[0].label;
+                            return '🛠️ Top Skills & Projects\n' + context[0].label;
                         },
                         afterBody: function(context) {
                             const index = context[0].dataIndex;
-                            const item = topCategories[index];
-                            return [
-                                `Unique Posters: ${item.unique_posters}`,
-                                `With External Links: ${item.jobs_with_external_links}`,
-                                `Avg Description Length: ${Math.round(item.avg_description_length)} chars`
-                            ];
+                            const item = top10[index];
+                            return item.project_description || 'No description';
                         }
                     }
                 }
@@ -926,19 +1080,14 @@ async function loadTopJobCategoriesChart() {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Number of Job Posts',
+                        text: 'Number of Users',
                         font: { size: 12, weight: 'bold' }
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString();
-                        }
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'Job Category',
+                        text: 'Project/Skill',
                         font: { size: 12, weight: 'bold' }
                     }
                 }
@@ -1002,9 +1151,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadProfileStatusChart();
     loadProfileFreshnessChart();
     
-    // Job analytics
-    loadJobListingsGrowthChart();
-    loadTopJobCategoriesChart();
+    // Talent marketplace intelligence
+    loadTopCompaniesChart();
+    loadTopRolesChart();
+    loadEducationDistributionChart();
+    loadGeographicDistributionChart();
+    loadTopSkillsProjectsChart();
     
     // Tables
     loadTopPostsTable();

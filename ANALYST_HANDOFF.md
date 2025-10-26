@@ -8,13 +8,13 @@
 
 ### ✅ Production-Ready Analytics Dashboard
 - **Live Dashboard**: http://127.0.0.1:5000 (can be deployed to shared environment)
-- **15 Business Metrics** across Growth, Engagement, Profile Quality, and Job Analytics
+- **18 Business Metrics** across Growth, Engagement, Profile Quality, and Talent Marketplace Intelligence
 - **Dual Database Architecture**: ChemLink DB + Engagement DB
 - **SQL Transparency**: Every chart has a "SQL" button to view/copy queries
 
 ### ✅ Complete Query Library
 Location: `sql_queries.py`
-- All 15 queries documented with:
+- All 18 queries documented with:
   - Query name
   - Database source
   - Complete SQL code
@@ -46,9 +46,12 @@ Location: `sql_queries.py`
 12. **Profile Status Breakdown** - Feature adoption (Finder vs Builder)
 13. **Profile Update Freshness** - Data currency tracking
 
-### Job Analytics (2)
-14. **Job Listings Growth** - Marketplace health tracking
-15. **Top Job Categories** - Job type distribution analysis
+### Talent Marketplace Intelligence (5)
+14. **Top Companies** - Employer brand tracking
+15. **Top Roles/Job Titles** - Skills and experience distribution
+16. **Education Distribution** - Credential quality analysis
+17. **Geographic Distribution** - Market concentration insights
+18. **Top Skills & Projects** - Expertise and project trends
 
 ## How to Use This Dashboard
 
@@ -156,7 +159,7 @@ static/css/         # Styling
 ✅ Data refreshing daily  
 
 ### Ideal State
-✅ All 15+ metrics working  
+✅ All 18+ metrics working  
 ✅ Date range filtering  
 ✅ Export capability  
 ✅ Automated reports

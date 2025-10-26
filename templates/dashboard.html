@@ -313,55 +313,124 @@
             </div>
         </section>
 
-        <!-- Job Analytics -->
-        <section class="metrics-section category-jobs">
+        <!-- Talent Marketplace Intelligence -->
+        <section class="metrics-section category-talent">
             <div class="category-header">
-                <h2>💼 Job Analytics</h2>
-                <p class="category-description">Track job posting activity and categorization</p>
+                <h2>🎯 Talent Marketplace Intelligence</h2>
+                <p class="category-description">Understand who's on your platform and what they offer</p>
             </div>
             
             <div class="chart-row">
-                <div class="chart-container" data-tooltip="job-listings-growth">
+                <div class="chart-container" data-tooltip="top-companies">
                     <div class="info-icon">ℹ️</div>
-                    <h3>Job Listings Growth</h3>
+                    <h3>Top Companies</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">We need visibility into job posting trends to understand platform value for employers and measure marketplace health</span>
+                        <span class="pain-text">We don't know if we're attracting talent from premium companies or if our network is high-quality enough to attract employers</span>
                     </div>
-                    <button class="sql-button" onclick="showSQLModal('job_listings_growth')">💾 SQL</button>
+                    <button class="sql-button" onclick="showSQLModal('top_companies')">💾 SQL</button>
                     <div class="chart-tooltip">
-                        <h3 class="tooltip-title">📈 Job Listings Growth</h3>
+                        <h3 class="tooltip-title">🏢 Top Companies</h3>
                         <h4>📊 What This Chart Shows</h4>
-                        <p>Monthly count of job postings and unique employers posting jobs. Tracks marketplace supply side.</p>
+                        <p>Companies where your users currently work or have worked. Shows if you're attracting talent from recognized employers.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Upward trend = platform attracting more employers. Flat/declining = need employer acquisition campaigns.</p>
+                        <p>Top-tier companies (Google, Amazon, etc.) = premium network. Unknown companies = need better talent acquisition strategy.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Without job posting data, you can't measure if you're building a valuable marketplace for employers or just a job seeker community.</p>
+                        <p>Without knowing company distribution, you can't prove network quality to recruiters or identify partnership opportunities.</p>
                         <h4>💾 Data Source</h4>
-                        <p><code>COUNT posts WHERE type ILIKE '%job%' GROUP BY month</code></p>
+                        <p><code>companies JOIN persons/experiences</code></p>
                     </div>
-                    <canvas id="jobListingsGrowthChart"></canvas>
+                    <canvas id="topCompaniesChart"></canvas>
                 </div>
-                <div class="chart-container" data-tooltip="top-job-categories">
+                <div class="chart-container" data-tooltip="top-roles">
                     <div class="info-icon">ℹ️</div>
-                    <h3>Top Job Categories</h3>
+                    <h3>Top Roles/Job Titles</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Understanding which job types dominate helps us tailor features and marketing to actual market demand</span>
+                        <span class="pain-text">Without knowing what roles our users have, we can't build features that match their needs or target the right employers</span>
                     </div>
-                    <button class="sql-button" onclick="showSQLModal('top_job_categories')">💾 SQL</button>
+                    <button class="sql-button" onclick="showSQLModal('top_roles')">💾 SQL</button>
                     <div class="chart-tooltip">
-                        <h3 class="tooltip-title">🏷️ Top Job Categories</h3>
+                        <h3 class="tooltip-title">💼 Top Roles/Job Titles</h3>
                         <h4>📊 What This Chart Shows</h4>
-                        <p>Distribution of job types being posted. Shows which industries/roles dominate your marketplace.</p>
+                        <p>Most common job titles/roles on your platform. Shows skill distribution and experience levels.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Top categories = where you have the most supply. Compare to user demographics to identify gaps or opportunities.</p>
+                        <p>Senior roles = experienced network. Junior roles = emerging talent. Use this to position platform messaging.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Can't optimize features or marketing without knowing what jobs employers actually post. This shows real market demand.</p>
+                        <p>Building features blindly without knowing user roles leads to wasted dev time and poor product-market fit.</p>
                         <h4>💾 Data Source</h4>
-                        <p><code>GROUP BY job type with post counts and external link tracking</code></p>
+                        <p><code>roles JOIN experiences</code></p>
                     </div>
-                    <canvas id="topJobCategoriesChart"></canvas>
+                    <canvas id="topRolesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="education-distribution">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Education Distribution</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Can't prove to recruiters that our talent pool is high-quality without showing education credentials and top schools</span>
+                    </div>
+                    <button class="sql-button" onclick="showSQLModal('education_distribution')">💾 SQL</button>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🎓 Education Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Degree types (BS, MS, PhD, etc.) on your platform. Indicates education level and expertise depth.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High PhD count = research-heavy network. Mostly Bachelor's = early-career focus. Use for recruiting positioning.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Recruiters won't pay for access without proof of credential quality. This shows you have verified, educated talent.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>degrees JOIN education</code></p>
+                    </div>
+                    <canvas id="educationDistributionChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="geographic-distribution">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Geographic Distribution</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We're spending marketing budget blindly without knowing where our users are concentrated or which markets to prioritize</span>
+                    </div>
+                    <button class="sql-button" onclick="showSQLModal('geographic_distribution')">💾 SQL</button>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🌍 Geographic Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Where your users are located (by country). Shows market penetration and expansion opportunities.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High concentration = strong market to double down on. Low concentration = untapped opportunity or need localization.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Spending equal marketing budget across all regions wastes money. Focus on where users already are.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>persons JOIN locations</code></p>
+                    </div>
+                    <canvas id="geographicDistributionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="top-skills-projects">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Top Skills & Projects</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Don't know what kind of work our users do or if they're doing cutting-edge projects that would attract premium employers</span>
+                    </div>
+                    <button class="sql-button" onclick="showSQLModal('top_skills_projects')">💾 SQL</button>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🛠️ Top Skills & Projects</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Most common project types and skills listed by users. Shows what work your network does.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Cutting-edge projects (AI, ML, etc.) = premium talent. Generic projects = commodity skills. Use for employer pitch.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Can't sell employer access without showing your network does valuable, relevant work in their domain.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>projects table</code></p>
+                    </div>
+                    <canvas id="topSkillsProjectsChart"></canvas>
                 </div>
             </div>
         </section>
