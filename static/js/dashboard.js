@@ -1106,6 +1106,97 @@ async function loadTopSkillsProjectsChart() {
 }
 
 // =============================================================================
+// FUNNEL ANALYTICS
+// =============================================================================
+
+// Account Creation Funnel
+async function loadAccountFunnelChart() {
+    const data = await fetchData('funnel/account-creation');
+    if (!data || data.length === 0) return;
+
+    const row = data[0];
+    const total = row.total_accounts;
+
+    // Define funnel stages with labels and values
+    const stages = [
+        { label: 'Account Created', value: total },
+        { label: 'Basic Info', value: row.step_basic_info },
+        { label: 'Added Headline', value: row.step_headline },
+        { label: 'Added Location', value: row.step_location },
+        { label: 'Added Company', value: row.step_company },
+        { label: 'Linked LinkedIn', value: row.step_linkedin },
+        { label: 'Enabled Finder', value: row.step_finder_enabled }
+    ];
+
+    const ctx = document.getElementById('accountFunnelChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: stages.map(s => s.label),
+            datasets: [{
+                label: 'Users Remaining',
+                data: stages.map(s => s.value),
+                backgroundColor: [
+                    '#667eea',
+                    '#764ba2', 
+                    '#48bb78',
+                    '#ed8936',
+                    '#4299e1',
+                    '#9f7aea',
+                    '#ed64a6'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.x;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            const dropPct = (100 - pct).toFixed(1);
+                            return [
+                                `Users: ${value.toLocaleString()}`,
+                                `Completion: ${pct}%`,
+                                `Drop-off: ${dropPct}%`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Onboarding Stage',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
 // TOP POSTS TABLE
 // =============================================================================
 async function loadTopPostsTable() {
@@ -1154,6 +1245,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadEngagementRateChart();
     loadContentTypeChart();
     loadActivePostersChart();
+    
+    // Funnel analytics
+    loadAccountFunnelChart();
     
     // Profile metrics
     loadProfileCompletionChart();

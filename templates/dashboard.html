@@ -239,6 +239,37 @@
             </div>
         </section>
 
+        <!-- Feature Adoption & Funnels -->
+        <section class="metrics-section category-funnel">
+            <div class="category-header">
+                <h2>🔄 Feature Adoption & Funnels</h2>
+                <p class="category-description">Track user onboarding and feature adoption drop-offs</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="account-funnel">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Account Creation Drop-off Funnel</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't know where users are dropping off during onboarding - critical for improving activation rates</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔄 Account Creation Funnel</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>User drop-off at each stage of account creation. Shows where users abandon the onboarding process.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Wider bars = more users at that stage. Biggest narrowing = critical drop-off point needing attention.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Can't improve activation rates without knowing where users drop off. Each lost user is lost revenue.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>persons table with profile completion indicators</code></p>
+                    </div>
+                    <canvas id="accountFunnelChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <!-- Profile Metrics -->
         <section class="metrics-section category-profile">
             <div class="category-header">

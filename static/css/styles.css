@@ -313,6 +313,10 @@ footer {
     border-top: 4px solid #ed8936;
 }
 
+.category-funnel .chart-container {
+    border-top: 4px solid #f56565;
+}
+
 /* Section visual separation */
 .metrics-section {
     background: rgba(255, 255, 255, 0.05);
