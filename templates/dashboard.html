@@ -247,9 +247,10 @@
             </div>
             
             <div class="chart-row">
-                <div class="chart-container full-width" data-tooltip="account-funnel">
+                <div class="chart-container" data-tooltip="account-funnel">
                     <div class="info-icon">ℹ️</div>
-                    <h3>Account Creation Drop-off Funnel</h3>
+                    <h3>Account Creation Drop-off Funnel (Bar)</h3>
+                    <button class="sql-button" onclick="showSQLModal('account_funnel')">💾 SQL</button>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
                         <span class="pain-text">We don't know where users are dropping off during onboarding - critical for improving activation rates</span>
@@ -266,6 +267,27 @@
                         <p><code>persons table with profile completion indicators</code></p>
                     </div>
                     <canvas id="accountFunnelChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="account-funnel-pyramid">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Account Creation Funnel (Pyramid)</h3>
+                    <button class="sql-button" onclick="showSQLModal('account_funnel')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Visual representation of user drop-off - wider = more users, narrower = fewer users</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔄 Funnel Pyramid View</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Same data as bar chart but in classic funnel/pyramid shape. Width represents user volume at each stage.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Top (widest) = most users. Bottom (narrowest) = fewest users. Each level shows percentage retained.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Classic funnel visualization makes drop-off patterns immediately obvious to stakeholders.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>persons table with profile completion indicators</code></p>
+                    </div>
+                    <canvas id="accountFunnelPyramidChart"></canvas>
                 </div>
             </div>
         </section>

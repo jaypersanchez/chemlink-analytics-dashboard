@@ -1,0 +1,71 @@
+@startuml Chemlink Data Architecture
+
+title Chemlink Service - Data Architecture
+
+rectangle "Data Sources" as sources {
+  [Resume Upload]
+  [LinkedIn Import] 
+  [Manual Entry]
+  [CSV Import]
+}
+
+database "Neo4j" as neo4j {
+  [Person]
+  [Company] 
+  [Role]
+  [Education]
+  [Skill]
+  [Location]
+}
+
+database "PostgreSQL" as postgres {
+  [users]
+  [embeddings] 
+  [query_embeddings]
+  [query_votes]
+}
+
+cloud "AWS Services" as aws {
+  [S3 Storage]
+  [Bedrock AI]
+}
+
+cloud "OpenAI" as openai {
+  [LLM Models]
+  [Embeddings API]
+}
+
+rectangle "Processing" as processing {
+  [Document Parser]
+  [Entity Extraction] 
+  [Embedding Generation]
+}
+
+sources --> processing
+processing --> neo4j : "Store Profiles"
+processing --> postgres : "Store Embeddings" 
+processing --> aws
+processing --> openai
+
+neo4j --> postgres : "Query Results"
+aws --> processing : "AI Processing"
+openai --> processing : "Generate Embeddings"
+
+note right of neo4j
+  Graph Database:
+  - Person profiles
+  - Company relationships
+  - Skills and experience
+  - Education history
+  - Complex queries via Cypher
+end note
+
+note right of postgres  
+  Relational Database:
+  - Vector embeddings for search
+  - Query analytics and history
+  - User votes and feedback
+  - Database migrations
+end note
+
+@enduml

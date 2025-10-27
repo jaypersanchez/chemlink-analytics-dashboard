@@ -1194,6 +1194,97 @@ async function loadAccountFunnelChart() {
             }
         }
     });
+
+    // Load pyramid chart with same data
+    loadAccountFunnelPyramidChart(stages, total);
+}
+
+// Account Creation Funnel Pyramid Chart (Custom Canvas Drawing)
+function loadAccountFunnelPyramidChart(stages, total) {
+    const canvas = document.getElementById('accountFunnelPyramidChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas dimensions based on container
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth - 40;
+    canvas.height = 400;
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    const maxValue = Math.max(...stages.map(s => s.value));
+    
+    // Calculate dimensions
+    const padding = 60;
+    const funnelHeight = height - (padding * 2);
+    const stageHeight = funnelHeight / stages.length;
+    const maxWidth = width - (padding * 2);
+    
+    // Colors matching bar chart
+    const stageColors = [
+        '#667eea',
+        '#764ba2', 
+        '#48bb78',
+        '#ed8936',
+        '#4299e1',
+        '#9f7aea',
+        '#ed64a6'
+    ];
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw funnel stages
+    stages.forEach((stage, index) => {
+        const y = padding + (index * stageHeight);
+        const stageWidth = (stage.value / maxValue) * maxWidth;
+        
+        // Calculate widths for trapezoid effect
+        let topWidth = stageWidth;
+        let bottomWidth = stageWidth;
+        
+        if (index < stages.length - 1) {
+            bottomWidth = (stages[index + 1].value / maxValue) * maxWidth;
+        }
+        
+        const topX = (width - topWidth) / 2;
+        const bottomX = (width - bottomWidth) / 2;
+        
+        // Draw trapezoid
+        ctx.fillStyle = stageColors[index];
+        ctx.strokeStyle = stageColors[index];
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        ctx.moveTo(topX, y);
+        ctx.lineTo(topX + topWidth, y);
+        ctx.lineTo(bottomX + bottomWidth, y + stageHeight);
+        ctx.lineTo(bottomX, y + stageHeight);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw stage label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(stage.label, width / 2, y + stageHeight / 2 - 12);
+        
+        // Draw count
+        ctx.font = '13px Arial';
+        ctx.fillText(stage.value.toLocaleString() + ' users', width / 2, y + stageHeight / 2 + 6);
+        
+        // Draw percentage
+        const percentage = ((stage.value / total) * 100).toFixed(1);
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillText(percentage + '%', width / 2, y + stageHeight / 2 + 22);
+    });
+    
+    // Make canvas responsive
+    window.addEventListener('resize', () => {
+        loadAccountFunnelPyramidChart(stages, total);
+    });
 }
 
 // =============================================================================

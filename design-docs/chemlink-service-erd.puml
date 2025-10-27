@@ -1,0 +1,328 @@
+@startuml ChemLink Service Database ERD
+!define table(x) entity x << (T,#FFAAAA) >>
+!define view(x) entity x << (V,#AAFFAA) >>
+!define junction(x) entity x << (J,#FFFFAA) >>
+
+title ChemLink Service Database Schema\nProfile Builder & Expert Finder System
+
+' Core Profile Management
+table(persons) {
+  **id** : BIGINT <<PK>>
+  --
+  **person_id** : UUID <<UK>>
+  **chemlink_id** : UUID <<UK>>
+  kratos_id : UUID
+  hydra_id : UUID
+  --
+  first_name : VARCHAR
+  middle_name : VARCHAR  
+  last_name : VARCHAR
+  email : VARCHAR
+  secondary_email : VARCHAR
+  mobile_number : VARCHAR
+  mobile_number_country_code : VARCHAR
+  --
+  profile_picture : VARCHAR
+  linked_in_url : VARCHAR
+  headline_description : TEXT
+  career_goals : TEXT
+  business_experience_summary : TEXT
+  --
+  location_id : BIGINT <<FK>>
+  company_id : BIGINT <<FK>>
+  role_id : BIGINT <<FK>>
+  --
+  has_finder : BOOLEAN
+  profile : JSON
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Professional Experience
+table(experiences) {
+  **id** : BIGINT <<PK>>
+  --
+  person_id : BIGINT <<FK>>
+  company_id : BIGINT <<FK>>
+  project_id : BIGINT <<FK>>
+  role_id : BIGINT <<FK>>
+  location_id : BIGINT <<FK>>
+  --
+  description : TEXT
+  type : VARCHAR
+  start_date : VARCHAR
+  end_date : VARCHAR
+  city : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Education
+table(education) {
+  **id** : BIGINT <<PK>>
+  --
+  person_id : BIGINT <<FK>>
+  school_id : BIGINT <<FK>>
+  degree_id : BIGINT <<FK>>
+  --
+  field_of_study : VARCHAR
+  start_date : VARCHAR
+  end_date : VARCHAR
+  description : TEXT
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Language Skills
+junction(person_languages) {
+  **id** : BIGINT <<PK>>
+  --
+  person_id : BIGINT <<FK>>
+  language_id : BIGINT <<FK>>
+  --
+  proficiency : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Reference Data
+table(companies) {
+  **id** : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  description : TEXT
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(roles) {
+  **id** : BIGINT <<PK>>
+  --
+  title : VARCHAR
+  description : TEXT
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(projects) {
+  **id** : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  description : TEXT
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(locations) {
+  **id** : BIGINT <<PK>>
+  --
+  country : VARCHAR
+  city : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(schools) {
+  **id** : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  location : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(degrees) {
+  **id** : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  type : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(languages) {
+  **id** : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  code : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Expert Finder Features
+table(collections) {
+  **id** : BIGINT <<PK>>
+  **person_id** : BIGINT <<FK>>
+  --
+  name : VARCHAR
+  description : TEXT
+  privacy : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+junction(collection_profiles) {
+  **id** : BIGINT <<PK>>
+  --
+  collection_id : BIGINT <<FK>>
+  person_id : BIGINT <<FK>>
+  added_by : BIGINT <<FK>>
+  --
+  rank : INTEGER
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+junction(collection_collaborators) {
+  **id** : BIGINT <<PK>>
+  --
+  collection_id : BIGINT <<FK>>
+  person_id : BIGINT <<FK>>
+  added_by : BIGINT <<FK>>
+  --
+  access_type : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' AI/ML Features
+table(embeddings) {
+  **id** : BIGINT <<PK>>
+  --
+  person_id : BIGINT <<FK>>
+  --
+  embedded_text : TEXT
+  embedded_vector : VECTOR
+  type : VARCHAR
+  start_date : DATE
+  end_date : DATE
+  score_multiplier : TEXT
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(query_embeddings) {
+  **id** : BIGINT <<PK>>
+  --
+  intent : VARCHAR
+  embedded_text : TEXT
+  embedded_vector : VECTOR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(query_votes) {
+  **id** : BIGINT <<PK>>
+  --
+  query_embedding_id : BIGINT <<FK>>
+  person_id : BIGINT <<FK>>
+  --
+  vote : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' System Tables
+table(view_access) {
+  **id** : BIGINT <<PK>>
+  --
+  user_id : UUID
+  person_id : BIGINT <<FK>>
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(administrators) {
+  **id** : BIGINT <<PK>>
+  --
+  user_id : UUID
+  role : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+table(audit_logs) {
+  **id** : BIGINT <<PK>>
+  --
+  user_id : UUID
+  action : VARCHAR
+  entity_type : VARCHAR
+  entity_id : VARCHAR
+  old_values : JSON
+  new_values : JSON
+  --
+  created_at : TIMESTAMPTZ
+}
+
+' Core Relationships
+persons ||--o{ experiences : "has work history"
+persons ||--o{ education : "has education"
+persons ||--o{ person_languages : "speaks languages"
+persons ||--o{ collections : "creates collections"
+persons ||--o{ embeddings : "has AI embeddings"
+
+experiences }o--|| companies : "worked at"
+experiences }o--|| roles : "in role"
+experiences }o--|| projects : "on project"
+experiences }o--|| locations : "in location"
+
+education }o--|| schools : "studied at"
+education }o--|| degrees : "earned degree"
+
+person_languages }o--|| languages : "language skill"
+
+persons }o--|| locations : "current location"
+persons }o--|| companies : "current company"
+persons }o--|| roles : "current role"
+
+' Collection Relationships
+collections ||--o{ collection_profiles : "contains profiles"
+collections ||--o{ collection_collaborators : "has collaborators"
+collection_profiles }o--|| persons : "profile of"
+collection_collaborators }o--|| persons : "collaborator"
+
+' AI/ML Relationships
+query_votes }o--|| query_embeddings : "votes on query"
+query_votes }o--|| persons : "voted by"
+
+' Access Control
+view_access }o--|| persons : "can view"
+@enduml

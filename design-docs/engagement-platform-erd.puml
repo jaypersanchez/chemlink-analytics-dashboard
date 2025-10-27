@@ -1,0 +1,140 @@
+@startuml Engagement Platform Database ERD
+!define table(x) entity x << (T,#AAFFFF) >>
+!define junction(x) entity x << (J,#FFFFAA) >>
+
+title Engagement Platform Database Schema\nSocial Media & Community Features (LinkedIn-like)
+
+' Core User Management
+table(persons) {
+  **id** : UUID <<PK>>
+  --
+  external_id : VARCHAR <<UK>>
+  iam_id : VARCHAR
+  --
+  first_name : VARCHAR <<NN>>
+  middle_name : VARCHAR
+  last_name : VARCHAR <<NN>>
+  email : VARCHAR <<NN>>
+  --
+  mobile_number : VARCHAR
+  mobile_number_country_code : VARCHAR
+  --
+  profile_picture_key : VARCHAR
+  profile_pic_updated_at : TIMESTAMPTZ
+  --
+  company_name : VARCHAR
+  role_title : VARCHAR
+  employment_status : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Social Groups/Communities
+table(groups) {
+  **id** : UUID <<PK>>
+  --
+  name : VARCHAR <<NN>>
+  description : TEXT
+  --
+  created_by : UUID <<FK>>
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Group Membership
+junction(group_members) {
+  **id** : UUID <<PK>>
+  --
+  group_id : UUID <<FK>> <<NN>>
+  person_id : UUID <<FK>> <<NN>>
+  --
+  role : VARCHAR <<NN>>
+  confirmed_at : TIMESTAMPTZ
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Social Posts
+table(posts) {
+  **id** : UUID <<PK>>
+  --
+  person_id : UUID <<FK>> <<NN>>
+  group_id : UUID <<FK>>
+  --
+  type : VARCHAR <<NN>>
+  content : TEXT
+  link_url : VARCHAR
+  media_keys : JSONB
+  --
+  status : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Post Comments
+table(comments) {
+  **id** : UUID <<PK>>
+  --
+  post_id : UUID <<FK>> <<NN>>
+  person_id : UUID <<FK>> <<NN>>
+  parent_comment_id : UUID <<FK>>
+  --
+  content : TEXT <<NN>>
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' User Mentions in Posts/Comments
+table(mentions) {
+  **id** : UUID <<PK>>
+  --
+  post_id : UUID <<FK>>
+  comment_id : UUID <<FK>>
+  mentioned_person_id : UUID <<FK>>
+  mentioning_person_id : UUID <<FK>>
+  --
+  type : VARCHAR
+  --
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+  deleted_at : TIMESTAMPTZ
+}
+
+' Core Relationships
+groups ||--o{ group_members : "has members"
+group_members }o--|| persons : "member"
+groups }o--|| persons : "created by"
+
+persons ||--o{ posts : "creates posts"
+posts }o--|| groups : "posted in group"
+
+posts ||--o{ comments : "has comments"
+comments }o--|| persons : "commented by"
+comments }o--|| comments : "replies to"
+
+posts ||--o{ mentions : "has mentions"
+comments ||--o{ mentions : "has mentions"
+mentions }o--|| persons : "mentions person"
+mentions }o--|| persons : "mentioned by"
+
+note right of persons : "Simplified user profiles\\nfor social engagement\\n\\nSynced with ChemLink Service\\nvia external_id mapping"
+
+note right of groups : "Professional communities\\nProject groups\\nSkill-based groups\\nChemonics teams"
+
+note right of posts : "Support multiple types:\\n- Text posts\\n- Link sharing\\n- Media posts\\n- Job postings"
+
+note right of comments : "Threaded comments\\nwith parent-child\\nrelationships"
+
+note right of mentions : "@ mentions in posts\\nand comments\\nwith notifications"
+
+@enduml
