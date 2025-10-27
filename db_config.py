@@ -25,6 +25,26 @@ def get_chemlink_db_connection():
         password=os.getenv('CHEMLINK_DB_PASSWORD')
     )
 
+def get_chemlink_dev_db_connection():
+    """Get connection to ChemLink Development database"""
+    return psycopg2.connect(
+        host=os.getenv('CHEMLINK_DEV_DB_HOST'),
+        port=os.getenv('CHEMLINK_DEV_DB_PORT', 5432),
+        database=os.getenv('CHEMLINK_DEV_DB_NAME'),
+        user=os.getenv('CHEMLINK_DEV_DB_USER'),
+        password=os.getenv('CHEMLINK_DEV_DB_PASSWORD')
+    )
+
+def get_chemlink_prd_db_connection():
+    """Get connection to ChemLink Production database (READ-ONLY)"""
+    return psycopg2.connect(
+        host=os.getenv('CHEMLINK_PRD_DB_HOST'),
+        port=os.getenv('CHEMLINK_PRD_DB_PORT', 5432),
+        database=os.getenv('CHEMLINK_PRD_DB_NAME'),
+        user=os.getenv('CHEMLINK_PRD_DB_USER'),
+        password=os.getenv('CHEMLINK_PRD_DB_PASSWORD')
+    )
+
 def execute_query(connection, query, params=None):
     """Execute a query and return results as list of dictionaries"""
     try:

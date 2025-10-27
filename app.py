@@ -805,6 +805,30 @@ def metrics_metadata():
     return jsonify(metadata)
 
 # ============================================================================
+# FEATURE ENGAGEMENT & FUNNEL ANALYTICS
+# ============================================================================
+
+@app.route('/api/funnel/account-creation')
+def account_creation_funnel():
+    """Get account creation drop-off funnel"""
+    query = """
+        SELECT 
+            COUNT(*) as total_accounts,
+            COUNT(*) FILTER (WHERE first_name IS NOT NULL AND last_name IS NOT NULL) as step_basic_info,
+            COUNT(*) FILTER (WHERE headline_description IS NOT NULL) as step_headline,
+            COUNT(*) FILTER (WHERE location_id IS NOT NULL) as step_location,
+            COUNT(*) FILTER (WHERE company_id IS NOT NULL) as step_company,
+            COUNT(*) FILTER (WHERE linked_in_url IS NOT NULL) as step_linkedin,
+            COUNT(*) FILTER (WHERE has_finder = true) as step_finder_enabled
+        FROM persons
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('year', CURRENT_DATE);
+    """
+    conn = get_chemlink_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+# ============================================================================
 # MAIN DASHBOARD ROUTE
 # ============================================================================
 
