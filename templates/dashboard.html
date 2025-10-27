@@ -291,6 +291,73 @@
                 </div>
             </div>
 
+            <!-- Finder Search Analytics -->
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="finder-searches">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Finder Search Volume</h3>
+                    <button class="sql-button" onclick="showSQLModal('finder_searches')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Don't know if users are actually using our AI-powered Finder feature</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔍 Finder Search Volume</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Total searches performed using the Finder AI feature over time. Shows feature adoption.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Upward trend = users finding value in AI search. Flat = feature not being discovered.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Finder is a key differentiator. Low usage means we're not converting users to our AI-powered features.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>query_embeddings table</code></p>
+                    </div>
+                    <canvas id="finderSearchesChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="finder-intents">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Search Intent Distribution</h3>
+                    <button class="sql-button" onclick="showSQLModal('finder_searches')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Need to understand what users are searching for to improve AI matching</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🎯 Search Intent Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Breakdown of search types/intents. Shows what users are looking for.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Top intents = user needs. Use this to prioritize AI model training and feature development.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without intent data, we can't optimize search quality or understand user needs.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>query_embeddings.intent field</code></p>
+                    </div>
+                    <canvas id="finderIntentsChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="finder-engagement">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Finder Engagement Rate</h3>
+                    <button class="sql-button" onclick="showSQLModal('finder_engagement')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Don't know if our AI search results are actually useful to users</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">💯 Finder Engagement Rate</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Percentage of searches that get votes/feedback. Shows search result quality.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High engagement = users finding relevant results. Low = AI needs improvement.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Poor search results mean users won't adopt Finder, losing our competitive advantage.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>query_votes / query_embeddings ratio</code></p>
+                    </div>
+                    <canvas id="finderEngagementChart"></canvas>
+                </div>
+            </div>
+
             <!-- Collections Feature Engagement -->
             <div class="chart-row">
                 <div class="chart-container" data-tooltip="profile-additions">

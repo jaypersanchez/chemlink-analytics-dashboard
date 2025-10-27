@@ -376,5 +376,62 @@ FROM collection_collaborators
 WHERE deleted_at IS NULL
 GROUP BY access_type
 ORDER BY share_count DESC;"""
+    },
+    "finder_searches": {
+        "name": "Finder Search Analytics",
+        "database": "ChemLink DB",
+        "query": """-- Total Searches
+SELECT COUNT(*) as total_searches
+FROM query_embeddings
+WHERE deleted_at IS NULL;
+
+-- Searches by Intent
+SELECT 
+    COALESCE(intent, 'Not Specified') as intent,
+    COUNT(*) as search_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 2) as percentage
+FROM query_embeddings
+WHERE deleted_at IS NULL
+GROUP BY intent
+ORDER BY search_count DESC
+LIMIT 10;
+
+-- Searches Over Time (Monthly)
+SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as searches
+FROM query_embeddings
+WHERE deleted_at IS NULL
+GROUP BY month
+ORDER BY month DESC
+LIMIT 12;"""
+    },
+    "finder_engagement": {
+        "name": "Finder Engagement Rate",
+        "database": "ChemLink DB",
+        "query": """-- Total Votes on Search Results
+SELECT COUNT(*) as total_votes
+FROM query_votes
+WHERE deleted_at IS NULL;
+
+-- Votes by Type (upvote/downvote)
+SELECT 
+    COALESCE(type, 'Unknown') as vote_type,
+    COUNT(*) as vote_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL), 2) as percentage
+FROM query_votes
+WHERE deleted_at IS NULL
+GROUP BY type
+ORDER BY vote_count DESC;
+
+-- Active Voters (Users who engaged with search results)
+SELECT COUNT(DISTINCT voter_id) as active_users
+FROM query_votes
+WHERE deleted_at IS NULL;
+
+-- Engagement Rate (% of searches that get votes)
+SELECT 
+    (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL)::float / 
+    NULLIF((SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 0) * 100 as engagement_rate_pct;"""
     }
 }

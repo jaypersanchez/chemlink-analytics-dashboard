@@ -1288,6 +1288,195 @@ function loadAccountFunnelPyramidChart(stages, total) {
 }
 
 // =============================================================================
+// FINDER SEARCH ANALYTICS
+// =============================================================================
+
+// Finder Search Volume Chart
+async function loadFinderSearchesChart() {
+    const data = await fetchData('finder/searches');
+    if (!data || !data.search_timeline || data.search_timeline.length === 0) return;
+
+    const ctx = document.getElementById('finderSearchesChart').getContext('2d');
+    const sortedData = [...data.search_timeline].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatMonth(d.month)),
+            datasets: [{
+                label: 'Searches',
+                data: sortedData.map(d => d.searches),
+                borderColor: colors.info,
+                backgroundColor: colors.info + '33',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Searches: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `Total: ${data.total_searches} Searches`,
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Searches',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Search Intent Distribution Chart
+async function loadFinderIntentsChart() {
+    const data = await fetchData('finder/searches');
+    if (!data || !data.searches_by_intent || data.searches_by_intent.length === 0) return;
+
+    const ctx = document.getElementById('finderIntentsChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.searches_by_intent.map(d => d.intent),
+            datasets: [{
+                label: 'Searches',
+                data: data.searches_by_intent.map(d => d.search_count),
+                backgroundColor: chartColors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = data.total_searches;
+                            const value = context.parsed.x;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return 'Searches: ' + value.toLocaleString() + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Searches',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Search Intent',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Finder Engagement Rate Chart
+async function loadFinderEngagementChart() {
+    const data = await fetchData('finder/engagement');
+    if (!data) return;
+
+    const ctx = document.getElementById('finderEngagementChart').getContext('2d');
+    
+    // Show vote types breakdown
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.votes_by_type.map(d => d.vote_type),
+            datasets: [{
+                data: data.votes_by_type.map(d => d.vote_count),
+                backgroundColor: [
+                    colors.success,
+                    colors.danger,
+                    colors.warning,
+                    colors.info
+                ],
+                borderWidth: 2,
+                borderColor: '#1a1d29'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#cccccc',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = data.total_votes;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + pct + '%)';
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `${data.engagement_rate_pct}% Engagement Rate (${data.active_users} Active Users)`,
+                    color: '#ffffff',
+                    font: { size: 13, weight: 'bold' }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
 // COLLECTIONS FEATURE ENGAGEMENT
 // =============================================================================
 
@@ -1530,6 +1719,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Funnel analytics
     loadAccountFunnelChart();
+    
+    // Finder search analytics
+    loadFinderSearchesChart();
+    loadFinderIntentsChart();
+    loadFinderEngagementChart();
     
     // Collections feature engagement
     loadProfileAdditionsChart();

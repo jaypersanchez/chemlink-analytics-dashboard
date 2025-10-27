@@ -829,6 +829,101 @@ def account_creation_funnel():
     return jsonify(results)
 
 # ============================================================================
+# FINDER SEARCH ANALYTICS
+# ============================================================================
+
+@app.route('/api/finder/searches')
+def finder_searches():
+    """Get Finder search metrics"""
+    # Total searches
+    total_query = """
+        SELECT COUNT(*) as total_searches
+        FROM query_embeddings
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Searches by intent
+    intent_query = """
+        SELECT 
+            COALESCE(intent, 'Not Specified') as intent,
+            COUNT(*) as search_count
+        FROM query_embeddings
+        WHERE deleted_at IS NULL
+        GROUP BY intent
+        ORDER BY search_count DESC
+        LIMIT 10;
+    """
+    
+    # Searches over time (monthly)
+    timeline_query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as searches
+        FROM query_embeddings
+        WHERE deleted_at IS NULL
+        GROUP BY month
+        ORDER BY month DESC
+        LIMIT 12;
+    """
+    
+    total = execute_query(get_chemlink_db_connection(), total_query)
+    by_intent = execute_query(get_chemlink_db_connection(), intent_query)
+    timeline = execute_query(get_chemlink_db_connection(), timeline_query)
+    
+    return jsonify({
+        "total_searches": total[0]['total_searches'] if total else 0,
+        "searches_by_intent": by_intent,
+        "search_timeline": timeline
+    })
+
+@app.route('/api/finder/engagement')
+def finder_engagement():
+    """Get Finder engagement metrics (votes on search results)"""
+    # Total votes
+    total_query = """
+        SELECT COUNT(*) as total_votes
+        FROM query_votes
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Votes by type
+    type_query = """
+        SELECT 
+            COALESCE(type, 'Unknown') as vote_type,
+            COUNT(*) as vote_count
+        FROM query_votes
+        WHERE deleted_at IS NULL
+        GROUP BY type
+        ORDER BY vote_count DESC;
+    """
+    
+    # Active voters
+    voters_query = """
+        SELECT COUNT(DISTINCT voter_id) as active_users
+        FROM query_votes
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Engagement rate (votes per search)
+    engagement_query = """
+        SELECT 
+            (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL)::float / 
+            NULLIF((SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 0) * 100 as engagement_rate_pct;
+    """
+    
+    total_votes = execute_query(get_chemlink_db_connection(), total_query)
+    by_type = execute_query(get_chemlink_db_connection(), type_query)
+    voters = execute_query(get_chemlink_db_connection(), voters_query)
+    engagement = execute_query(get_chemlink_db_connection(), engagement_query)
+    
+    return jsonify({
+        "total_votes": total_votes[0]['total_votes'] if total_votes else 0,
+        "votes_by_type": by_type,
+        "active_users": voters[0]['active_users'] if voters else 0,
+        "engagement_rate_pct": round(engagement[0]['engagement_rate_pct'], 2) if engagement and engagement[0]['engagement_rate_pct'] else 0
+    })
+
+# ============================================================================
 # COLLECTIONS FEATURE ENGAGEMENT
 # ============================================================================
 
