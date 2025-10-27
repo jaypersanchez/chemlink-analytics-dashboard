@@ -299,5 +299,19 @@ GROUP BY pr.name, pr.description
 HAVING COUNT(DISTINCT pr.person_id) > 1
 ORDER BY user_count DESC
 LIMIT 20;"""
+    },
+    "account_funnel": {
+        "name": "Account Creation Drop-off Funnel",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    COUNT(*) as total_accounts,
+    COUNT(CASE WHEN first_name IS NOT NULL AND last_name IS NOT NULL THEN 1 END) as step_basic_info,
+    COUNT(CASE WHEN headline_description IS NOT NULL AND LENGTH(headline_description) > 10 THEN 1 END) as step_headline,
+    COUNT(CASE WHEN location_id IS NOT NULL THEN 1 END) as step_location,
+    COUNT(CASE WHEN company_id IS NOT NULL THEN 1 END) as step_company,
+    COUNT(CASE WHEN linked_in_url IS NOT NULL THEN 1 END) as step_linkedin,
+    COUNT(CASE WHEN finder_enabled = true THEN 1 END) as step_finder_enabled
+FROM persons
+WHERE deleted_at IS NULL;"""
     }
 }
