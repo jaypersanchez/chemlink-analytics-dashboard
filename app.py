@@ -746,13 +746,13 @@ def metrics_metadata():
                     {
                         "id": "profile_completion",
                         "name": "Profile Completion Score",
-                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters",
+                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for users",
                         "endpoint": "/api/profile/completion-rate"
                     },
                     {
                         "id": "profile_status",
                         "name": "Profile Status Breakdown",
-                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters",
+                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for users",
                         "endpoint": "/api/profile/completion-rate"
                     },
                     {
@@ -771,19 +771,19 @@ def metrics_metadata():
                     {
                         "id": "top_companies",
                         "name": "Top Companies",
-                        "pain_point": "We don't know if we're attracting talent from premium companies or if our network is high-quality enough to attract employers",
+                        "pain_point": "We don't know if we're attracting talent from premium companies or if our network quality is sufficient",
                         "endpoint": "/api/talent/top-companies"
                     },
                     {
                         "id": "top_roles",
                         "name": "Top Roles/Job Titles",
-                        "pain_point": "Without knowing what roles our users have, we can't build features that match their needs or target the right employers",
+                        "pain_point": "Without knowing what roles our users have, we can't build features that match their needs",
                         "endpoint": "/api/talent/top-roles"
                     },
                     {
                         "id": "education_distribution",
                         "name": "Education Distribution",
-                        "pain_point": "Can't prove to recruiters that our talent pool is high-quality without showing education credentials and top schools",
+                        "pain_point": "Understanding education credentials and top schools helps prove our talent pool is high-quality",
                         "endpoint": "/api/talent/education-distribution"
                     },
                     {
@@ -795,7 +795,7 @@ def metrics_metadata():
                     {
                         "id": "top_skills_projects",
                         "name": "Top Skills & Projects",
-                        "pain_point": "Don't know what kind of work our users do or if they're doing cutting-edge projects that would attract premium employers",
+                        "pain_point": "Don't know what kind of work our users do or if they're doing cutting-edge projects",
                         "endpoint": "/api/talent/top-skills-projects"
                     }
                 ]
