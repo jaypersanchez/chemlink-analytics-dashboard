@@ -829,6 +829,108 @@ def account_creation_funnel():
     return jsonify(results)
 
 # ============================================================================
+# COLLECTIONS FEATURE ENGAGEMENT
+# ============================================================================
+
+@app.route('/api/collections/profile-additions')
+def collections_profile_additions():
+    """Get profile additions to collections over time"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as profiles_added
+        FROM collection_profiles
+        WHERE deleted_at IS NULL
+        GROUP BY month
+        ORDER BY month DESC
+        LIMIT 12;
+    """
+    conn = get_chemlink_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/collections/created')
+def collections_created():
+    """Get collections created over time and by privacy type"""
+    # Get monthly creation trend
+    monthly_query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as collections_created
+        FROM collections
+        WHERE deleted_at IS NULL
+        GROUP BY month
+        ORDER BY month DESC
+        LIMIT 12;
+    """
+    
+    # Get privacy breakdown
+    privacy_query = """
+        SELECT 
+            COALESCE(privacy, 'Not Set') as privacy_type,
+            COUNT(*) as count
+        FROM collections
+        WHERE deleted_at IS NULL
+        GROUP BY privacy
+        ORDER BY count DESC;
+    """
+    
+    # Get total count
+    total_query = """
+        SELECT COUNT(*) as total_collections
+        FROM collections
+        WHERE deleted_at IS NULL;
+    """
+    
+    monthly = execute_query(get_chemlink_db_connection(), monthly_query)
+    privacy = execute_query(get_chemlink_db_connection(), privacy_query)
+    total = execute_query(get_chemlink_db_connection(), total_query)
+    
+    return jsonify({
+        "monthly_trend": monthly,
+        "privacy_breakdown": privacy,
+        "total_count": total[0]['total_collections'] if total else 0
+    })
+
+@app.route('/api/collections/shared')
+def collections_shared():
+    """Get shared collections metrics"""
+    # Get total shared collections
+    shared_query = """
+        SELECT COUNT(DISTINCT collection_id) as shared_collections
+        FROM collection_collaborators
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Get sharing by access type
+    access_query = """
+        SELECT 
+            COALESCE(access_type, 'Not Set') as access_type,
+            COUNT(*) as share_count
+        FROM collection_collaborators
+        WHERE deleted_at IS NULL
+        GROUP BY access_type
+        ORDER BY share_count DESC;
+    """
+    
+    # Get total collaboration invites
+    total_query = """
+        SELECT COUNT(*) as total_shares
+        FROM collection_collaborators
+        WHERE deleted_at IS NULL;
+    """
+    
+    shared = execute_query(get_chemlink_db_connection(), shared_query)
+    access_types = execute_query(get_chemlink_db_connection(), access_query)
+    total = execute_query(get_chemlink_db_connection(), total_query)
+    
+    return jsonify({
+        "shared_collections_count": shared[0]['shared_collections'] if shared else 0,
+        "access_type_breakdown": access_types,
+        "total_shares": total[0]['total_shares'] if total else 0
+    })
+
+# ============================================================================
 # MAIN DASHBOARD ROUTE
 # ============================================================================
 

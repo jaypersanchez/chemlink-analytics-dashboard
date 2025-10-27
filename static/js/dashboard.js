@@ -1288,6 +1288,197 @@ function loadAccountFunnelPyramidChart(stages, total) {
 }
 
 // =============================================================================
+// COLLECTIONS FEATURE ENGAGEMENT
+// =============================================================================
+
+// Profile Additions to Collections Chart
+async function loadProfileAdditionsChart() {
+    const data = await fetchData('collections/profile-additions');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('profileAdditionsChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatMonth(d.month)),
+            datasets: [{
+                label: 'Profiles Added',
+                data: sortedData.map(d => d.profiles_added),
+                borderColor: colors.success,
+                backgroundColor: colors.success + '33',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Profiles Added: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Profiles Added',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Collections Created Chart
+async function loadCollectionsCreatedChart() {
+    const data = await fetchData('collections/created');
+    if (!data) return;
+
+    const ctx = document.getElementById('collectionsCreatedChart').getContext('2d');
+    
+    // Show privacy breakdown as doughnut chart
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.privacy_breakdown.map(d => d.privacy_type || 'Unknown'),
+            datasets: [{
+                data: data.privacy_breakdown.map(d => d.count),
+                backgroundColor: [
+                    colors.primary,
+                    colors.secondary,
+                    colors.warning,
+                    colors.info
+                ],
+                borderWidth: 2,
+                borderColor: '#1a1d29'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#cccccc',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = data.total_count;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + pct + '%)';
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `Total: ${data.total_count} Collections`,
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                }
+            }
+        }
+    });
+}
+
+// Collections Shared Chart
+async function loadCollectionsSharedChart() {
+    const data = await fetchData('collections/shared');
+    if (!data) return;
+
+    const ctx = document.getElementById('collectionsSharedChart').getContext('2d');
+    
+    // Show access type breakdown
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.access_type_breakdown.map(d => d.access_type || 'Unknown'),
+            datasets: [{
+                label: 'Collaborations',
+                data: data.access_type_breakdown.map(d => d.share_count),
+                backgroundColor: [
+                    colors.success,
+                    colors.warning,
+                    colors.info,
+                    colors.danger
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Shares: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `${data.shared_collections_count} Collections Shared (${data.total_shares} Total Collaborations)`,
+                    color: '#ffffff',
+                    font: { size: 13, weight: 'bold' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Access Type',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Shares',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
 // TOP POSTS TABLE
 // =============================================================================
 async function loadTopPostsTable() {
@@ -1339,6 +1530,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Funnel analytics
     loadAccountFunnelChart();
+    
+    // Collections feature engagement
+    loadProfileAdditionsChart();
+    loadCollectionsCreatedChart();
+    loadCollectionsSharedChart();
     
     // Profile metrics
     loadProfileCompletionChart();

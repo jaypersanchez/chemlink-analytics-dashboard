@@ -313,5 +313,68 @@ LIMIT 20;"""
     COUNT(CASE WHEN finder_enabled = true THEN 1 END) as step_finder_enabled
 FROM persons
 WHERE deleted_at IS NULL;"""
+    },
+    "profile_additions": {
+        "name": "Profile Additions to Collections",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as profiles_added
+FROM collection_profiles
+WHERE deleted_at IS NULL
+GROUP BY month
+ORDER BY month DESC
+LIMIT 12;"""
+    },
+    "collections_created": {
+        "name": "Collections Created",
+        "database": "ChemLink DB",
+        "query": """-- Total Collections
+SELECT COUNT(*) as total_collections
+FROM collections
+WHERE deleted_at IS NULL;
+
+-- Collections by Privacy Type
+SELECT 
+    COALESCE(privacy, 'Not Set') as privacy_type,
+    COUNT(*) as count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM collections WHERE deleted_at IS NULL), 2) as percentage
+FROM collections
+WHERE deleted_at IS NULL
+GROUP BY privacy
+ORDER BY count DESC;
+
+-- Collections Created Over Time (Monthly)
+SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as collections_created
+FROM collections
+WHERE deleted_at IS NULL
+GROUP BY month
+ORDER BY month DESC
+LIMIT 12;"""
+    },
+    "collections_shared": {
+        "name": "Shared Collections",
+        "database": "ChemLink DB",
+        "query": """-- Total Shared Collections
+SELECT COUNT(DISTINCT collection_id) as shared_collections
+FROM collection_collaborators
+WHERE deleted_at IS NULL;
+
+-- Total Collaboration Invites
+SELECT COUNT(*) as total_shares
+FROM collection_collaborators
+WHERE deleted_at IS NULL;
+
+-- Collections by Access Type
+SELECT 
+    COALESCE(access_type, 'Not Set') as access_type,
+    COUNT(*) as share_count,
+    COUNT(DISTINCT collection_id) as collections_with_access
+FROM collection_collaborators
+WHERE deleted_at IS NULL
+GROUP BY access_type
+ORDER BY share_count DESC;"""
     }
 }
