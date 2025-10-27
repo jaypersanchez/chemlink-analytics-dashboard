@@ -838,4 +838,15 @@ def index():
     return render_template('dashboard.html')
 
 if __name__ == '__main__':
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    env = os.getenv('APP_ENV', 'uat').upper()
+    print(f"\n{'='*60}")
+    print(f"🚀 ChemLink Analytics Dashboard")
+    print(f"📊 Environment: {env}")
+    print(f"🌐 URL: http://127.0.0.1:5000")
+    print(f"{'='*60}\n")
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

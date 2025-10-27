@@ -5,6 +5,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Get current environment
+APP_ENV = os.getenv('APP_ENV', 'uat').lower()
+
+def get_chemlink_env_connection():
+    """Get ChemLink connection based on APP_ENV setting"""
+    if APP_ENV == 'prod':
+        return get_chemlink_prd_db_connection()
+    elif APP_ENV == 'dev':
+        return get_chemlink_dev_db_connection()
+    else:  # default to uat/staging
+        return get_chemlink_db_connection()
+
 def get_engagement_db_connection():
     """Get connection to Engagement Platform database"""
     return psycopg2.connect(
