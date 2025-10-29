@@ -254,7 +254,7 @@ ORDER BY user_count DESC, total_experiences DESC;"""
     r.title as role_title,
     COUNT(DISTINCT e.person_id) as user_count,
     COUNT(DISTINCT e.company_id) as companies_count,
-    AVG(EXTRACT(YEAR FROM COALESCE(e.end_date, CURRENT_DATE)) - EXTRACT(YEAR FROM e.start_date)) as avg_years_in_role
+    COUNT(DISTINCT e.id) as total_experiences
 FROM roles r
 JOIN experiences e ON r.id = e.role_id
 WHERE r.deleted_at IS NULL
