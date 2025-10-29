@@ -625,15 +625,12 @@ def top_skills_projects():
         SELECT 
             pr.name as project_name,
             LEFT(pr.description, 100) as project_description,
-            COUNT(DISTINCT pr.person_id) as user_count,
-            MIN(pr.start_date) as first_project,
-            MAX(COALESCE(pr.end_date, CURRENT_DATE)) as last_project
+            COUNT(*) as project_count
         FROM projects pr
         WHERE pr.deleted_at IS NULL
           AND pr.name IS NOT NULL
         GROUP BY pr.name, pr.description
-        HAVING COUNT(DISTINCT pr.person_id) > 1
-        ORDER BY user_count DESC;
+        ORDER BY project_count DESC;
     """
     conn = get_chemlink_env_connection()
     results = execute_query(conn, query)

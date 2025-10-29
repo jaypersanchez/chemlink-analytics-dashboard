@@ -297,16 +297,13 @@ ORDER BY user_count DESC;"""
         "database": "ChemLink DB",
         "query": """SELECT 
     pr.name as project_name,
-    pr.description as project_description,
-    COUNT(DISTINCT pr.person_id) as user_count,
-    MIN(pr.start_date) as first_project,
-    MAX(COALESCE(pr.end_date, CURRENT_DATE)) as last_project
+    LEFT(pr.description, 100) as project_description,
+    COUNT(*) as project_count
 FROM projects pr
 WHERE pr.deleted_at IS NULL
   AND pr.name IS NOT NULL
 GROUP BY pr.name, pr.description
-HAVING COUNT(DISTINCT pr.person_id) > 1
-ORDER BY user_count DESC;"""
+ORDER BY project_count DESC;"""
     },
     "account_funnel": {
         "name": "Account Creation Drop-off Funnel",
