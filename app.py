@@ -857,7 +857,7 @@ def finder_searches():
         LIMIT 10;
     """
     
-    # Searches over time (monthly)
+    # Searches over time (monthly) - all available data
     timeline_query = """
         SELECT 
             DATE_TRUNC('month', created_at) as month,
@@ -865,8 +865,7 @@ def finder_searches():
         FROM query_embeddings
         WHERE deleted_at IS NULL
         GROUP BY month
-        ORDER BY month DESC
-        LIMIT 12;
+        ORDER BY month DESC;
     """
     
     total = execute_query(get_chemlink_env_connection(), total_query)

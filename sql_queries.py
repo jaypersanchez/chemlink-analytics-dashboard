@@ -410,15 +410,14 @@ GROUP BY intent
 ORDER BY search_count DESC
 LIMIT 10;
 
--- Searches Over Time (Monthly)
+-- Searches Over Time (Monthly) - all available data
 SELECT 
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as searches
 FROM query_embeddings
 WHERE deleted_at IS NULL
 GROUP BY month
-ORDER BY month DESC
-LIMIT 12;"""
+ORDER BY month DESC;"""
     },
     "finder_engagement": {
         "name": "Finder Engagement Rate",
