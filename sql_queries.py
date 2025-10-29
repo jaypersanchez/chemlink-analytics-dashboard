@@ -238,17 +238,14 @@ ORDER BY days_since_update DESC;"""
         "query": """SELECT 
     c.name as company_name,
     COUNT(DISTINCT p.id) as user_count,
-    COUNT(DISTINCT e.id) as total_experiences,
-    STRING_AGG(DISTINCT l.country, ', ') as countries
+    COUNT(DISTINCT e.id) as total_experiences
 FROM companies c
 LEFT JOIN persons p ON c.id = p.company_id AND p.deleted_at IS NULL
 LEFT JOIN experiences e ON c.id = e.company_id AND e.deleted_at IS NULL
-LEFT JOIN locations l ON c.location_id = l.id
 WHERE c.deleted_at IS NULL
   AND (p.id IS NOT NULL OR e.id IS NOT NULL)
 GROUP BY c.id, c.name
-ORDER BY user_count DESC, total_experiences DESC
-LIMIT 20;"""
+ORDER BY user_count DESC, total_experiences DESC;"""
     },
     "top_roles": {
         "name": "Top Roles/Job Titles",
@@ -263,8 +260,7 @@ JOIN experiences e ON r.id = e.role_id
 WHERE r.deleted_at IS NULL
   AND e.deleted_at IS NULL
 GROUP BY r.id, r.title
-ORDER BY user_count DESC
-LIMIT 20;"""
+ORDER BY user_count DESC;"""
     },
     "education_distribution": {
         "name": "Education Distribution",
@@ -294,8 +290,7 @@ FROM persons p
 LEFT JOIN locations l ON p.location_id = l.id
 WHERE p.deleted_at IS NULL
 GROUP BY l.country
-ORDER BY user_count DESC
-LIMIT 15;"""
+ORDER BY user_count DESC;"""
     },
     "top_skills_projects": {
         "name": "Top Skills & Project Types",
@@ -311,8 +306,7 @@ WHERE pr.deleted_at IS NULL
   AND pr.name IS NOT NULL
 GROUP BY pr.name, pr.description
 HAVING COUNT(DISTINCT pr.person_id) > 1
-ORDER BY user_count DESC
-LIMIT 20;"""
+ORDER BY user_count DESC;"""
     },
     "account_funnel": {
         "name": "Account Creation Drop-off Funnel",

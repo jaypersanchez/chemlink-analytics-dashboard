@@ -546,17 +546,14 @@ def top_companies():
         SELECT 
             c.name as company_name,
             COUNT(DISTINCT p.id) as user_count,
-            COUNT(DISTINCT e.id) as total_experiences,
-            STRING_AGG(DISTINCT l.country, ', ') as countries
+            COUNT(DISTINCT e.id) as total_experiences
         FROM companies c
         LEFT JOIN persons p ON c.id = p.company_id AND p.deleted_at IS NULL
         LEFT JOIN experiences e ON c.id = e.company_id AND e.deleted_at IS NULL
-        LEFT JOIN locations l ON c.location_id = l.id
         WHERE c.deleted_at IS NULL
           AND (p.id IS NOT NULL OR e.id IS NOT NULL)
         GROUP BY c.id, c.name
-        ORDER BY user_count DESC, total_experiences DESC
-        LIMIT 20;
+        ORDER BY user_count DESC, total_experiences DESC;
     """
     conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
@@ -577,8 +574,7 @@ def top_roles():
         WHERE r.deleted_at IS NULL
           AND e.deleted_at IS NULL
         GROUP BY r.id, r.title
-        ORDER BY user_count DESC
-        LIMIT 20;
+        ORDER BY user_count DESC;
     """
     conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
@@ -617,8 +613,7 @@ def geographic_distribution():
         LEFT JOIN locations l ON p.location_id = l.id
         WHERE p.deleted_at IS NULL
         GROUP BY l.country
-        ORDER BY user_count DESC
-        LIMIT 15;
+        ORDER BY user_count DESC;
     """
     conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
@@ -639,8 +634,7 @@ def top_skills_projects():
           AND pr.name IS NOT NULL
         GROUP BY pr.name, pr.description
         HAVING COUNT(DISTINCT pr.person_id) > 1
-        ORDER BY user_count DESC
-        LIMIT 20;
+        ORDER BY user_count DESC;
     """
     conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
