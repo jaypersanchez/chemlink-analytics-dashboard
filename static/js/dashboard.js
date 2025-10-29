@@ -268,7 +268,9 @@ async function loadMAUChart() {
                 label: 'Monthly Active Users',
                 data: data.map(d => d.active_users),
                 backgroundColor: colors.purple,
-                borderWidth: 0
+                borderWidth: 0,
+                barPercentage: data.length === 1 ? 0.3 : 0.8,  // Narrower bars for single data points
+                categoryPercentage: 0.9
             }]
         },
         options: {
