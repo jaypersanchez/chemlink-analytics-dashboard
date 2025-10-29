@@ -172,21 +172,24 @@ def active_users_weekly():
 
 @app.route('/api/active-users/monthly')
 def active_users_monthly():
-    """Get monthly active users (MAU)"""
+    """Get monthly active users (MAU) - rolling 12 months"""
     query = """
         SELECT 
             DATE_TRUNC('month', activity_date) as month,
             COUNT(DISTINCT person_id) as active_users
         FROM (
             SELECT person_id, created_at as activity_date 
-            FROM posts WHERE deleted_at IS NULL
+            FROM posts 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
             SELECT person_id, created_at 
-            FROM comments WHERE deleted_at IS NULL
+            FROM comments 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
         ) monthly_activity
         GROUP BY DATE_TRUNC('month', activity_date)
-        ORDER BY month DESC
-        LIMIT 12;
+        ORDER BY month DESC;
     """
     conn = get_engagement_db_connection()
     results = execute_query(conn, query)

@@ -63,15 +63,21 @@ ORDER BY date DESC;"""
     "mau": {
         "name": "Monthly Active Users (MAU)",
         "database": "Engagement DB",
-        "query": """SELECT 
+        "query": """-- Rolling 12-month window (current month + 11 previous months)
+-- Returns available data if less than 12 months exists
+SELECT 
     DATE_TRUNC('month', activity_date) as month,
     COUNT(DISTINCT person_id) as active_users
 FROM (
     SELECT person_id, created_at as activity_date 
-    FROM posts WHERE deleted_at IS NULL
+    FROM posts 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
     SELECT person_id, created_at 
-    FROM comments WHERE deleted_at IS NULL
+    FROM comments 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
 ) monthly_activity
 GROUP BY DATE_TRUNC('month', activity_date)
 ORDER BY month DESC;"""
