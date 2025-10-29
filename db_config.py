@@ -5,14 +5,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Get current environment
-APP_ENV = os.getenv('APP_ENV', 'uat').lower()
-
 def get_chemlink_env_connection():
     """Get ChemLink connection based on APP_ENV setting"""
-    if APP_ENV == 'prod':
+    # Reload dotenv to get latest environment
+    load_dotenv(override=True)
+    app_env = os.getenv('APP_ENV', 'uat').lower()
+    
+    if app_env == 'prod':
         return get_chemlink_prd_db_connection()
-    elif APP_ENV == 'dev':
+    elif app_env == 'dev':
         return get_chemlink_dev_db_connection()
     else:  # default to uat/staging
         return get_chemlink_db_connection()

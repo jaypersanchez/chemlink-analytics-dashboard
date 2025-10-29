@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
-from db_config import get_engagement_db_connection, get_chemlink_db_connection, execute_query
+from db_config import get_engagement_db_connection, get_chemlink_env_connection, execute_query
 import json
 from datetime import datetime
 from sql_queries import SQL_QUERIES
@@ -39,7 +39,7 @@ def new_users_daily():
           AND DATE(created_at) = CURRENT_DATE
         ORDER BY created_at DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -56,7 +56,7 @@ def new_users_weekly():
         ORDER BY week DESC
         LIMIT 12;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -73,7 +73,7 @@ def new_users_monthly():
         GROUP BY month 
         ORDER BY month DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -97,7 +97,7 @@ def growth_rate_weekly():
         ORDER BY week DESC
         LIMIT 12;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -122,7 +122,7 @@ def growth_rate_monthly():
         FROM monthly_users 
         ORDER BY month DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -235,7 +235,7 @@ def active_users_monthly_by_country():
           AND p.deleted_at IS NULL;
     """
     
-    conn_chemlink = get_chemlink_db_connection()
+    conn_chemlink = get_chemlink_env_connection()
     location_data = execute_query(conn_chemlink, location_query, person_ids)
     
     # Step 3: Create a lookup dictionary for person_id -> country
@@ -505,7 +505,7 @@ def profile_completion_rate():
         ORDER BY profile_completeness_score DESC, embedding_count DESC
         LIMIT 50;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -528,7 +528,7 @@ def profile_update_frequency():
         ORDER BY days_since_update DESC
         LIMIT 50;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -555,7 +555,7 @@ def top_companies():
         ORDER BY user_count DESC, total_experiences DESC
         LIMIT 20;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -577,7 +577,7 @@ def top_roles():
         ORDER BY user_count DESC
         LIMIT 20;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -596,7 +596,7 @@ def education_distribution():
         GROUP BY d.id, d.name
         ORDER BY user_count DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -617,7 +617,7 @@ def geographic_distribution():
         ORDER BY user_count DESC
         LIMIT 15;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -639,7 +639,7 @@ def top_skills_projects():
         ORDER BY user_count DESC
         LIMIT 20;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -824,7 +824,7 @@ def account_creation_funnel():
         WHERE deleted_at IS NULL
           AND created_at >= DATE_TRUNC('year', CURRENT_DATE);
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -866,9 +866,9 @@ def finder_searches():
         LIMIT 12;
     """
     
-    total = execute_query(get_chemlink_db_connection(), total_query)
-    by_intent = execute_query(get_chemlink_db_connection(), intent_query)
-    timeline = execute_query(get_chemlink_db_connection(), timeline_query)
+    total = execute_query(get_chemlink_env_connection(), total_query)
+    by_intent = execute_query(get_chemlink_env_connection(), intent_query)
+    timeline = execute_query(get_chemlink_env_connection(), timeline_query)
     
     return jsonify({
         "total_searches": total[0]['total_searches'] if total else 0,
@@ -911,10 +911,10 @@ def finder_engagement():
             NULLIF((SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 0) * 100 as engagement_rate_pct;
     """
     
-    total_votes = execute_query(get_chemlink_db_connection(), total_query)
-    by_type = execute_query(get_chemlink_db_connection(), type_query)
-    voters = execute_query(get_chemlink_db_connection(), voters_query)
-    engagement = execute_query(get_chemlink_db_connection(), engagement_query)
+    total_votes = execute_query(get_chemlink_env_connection(), total_query)
+    by_type = execute_query(get_chemlink_env_connection(), type_query)
+    voters = execute_query(get_chemlink_env_connection(), voters_query)
+    engagement = execute_query(get_chemlink_env_connection(), engagement_query)
     
     return jsonify({
         "total_votes": total_votes[0]['total_votes'] if total_votes else 0,
@@ -940,7 +940,7 @@ def collections_profile_additions():
         ORDER BY month DESC
         LIMIT 12;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -977,9 +977,9 @@ def collections_created():
         WHERE deleted_at IS NULL;
     """
     
-    monthly = execute_query(get_chemlink_db_connection(), monthly_query)
-    privacy = execute_query(get_chemlink_db_connection(), privacy_query)
-    total = execute_query(get_chemlink_db_connection(), total_query)
+    monthly = execute_query(get_chemlink_env_connection(), monthly_query)
+    privacy = execute_query(get_chemlink_env_connection(), privacy_query)
+    total = execute_query(get_chemlink_env_connection(), total_query)
     
     return jsonify({
         "monthly_trend": monthly,
@@ -1015,9 +1015,9 @@ def collections_shared():
         WHERE deleted_at IS NULL;
     """
     
-    shared = execute_query(get_chemlink_db_connection(), shared_query)
-    access_types = execute_query(get_chemlink_db_connection(), access_query)
-    total = execute_query(get_chemlink_db_connection(), total_query)
+    shared = execute_query(get_chemlink_env_connection(), shared_query)
+    access_types = execute_query(get_chemlink_env_connection(), access_query)
+    total = execute_query(get_chemlink_env_connection(), total_query)
     
     return jsonify({
         "shared_collections_count": shared[0]['shared_collections'] if shared else 0,

@@ -7,21 +7,29 @@ SQL_QUERIES = {
     "new_users_monthly": {
         "name": "New Users - Monthly Trend",
         "database": "ChemLink DB",
-        "query": """SELECT 
+        "query": """-- Rolling 12-month window (current month + 11 previous months)
+-- Returns available data if less than 12 months exists
+SELECT 
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as new_users
 FROM persons 
 WHERE deleted_at IS NULL
+  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
 GROUP BY month 
 ORDER BY month DESC;"""
     },
     "growth_rate_monthly": {
         "name": "User Growth Rate - Monthly",
         "database": "ChemLink DB",
-        "query": """WITH monthly_users AS (
+        "query": """-- Rolling 12-month window with month-over-month growth rate calculation
+-- Shows percentage change compared to previous month
+-- Returns available data if less than 12 months exists
+WITH monthly_users AS (
     SELECT DATE_TRUNC('month', created_at) as month,
            COUNT(*) as new_users
-    FROM persons WHERE deleted_at IS NULL
+    FROM persons 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     GROUP BY month
 )
 SELECT 
