@@ -1697,6 +1697,261 @@ async function loadTopPostsTable() {
     });
 }
 
+// DAU Comprehensive Chart  
+async function loadDAUComprehensiveChart() {
+    const data = await fetchData('active-users/daily-comprehensive');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('dauComprehensiveChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatDate(d.date)),
+            datasets: [{
+                label: 'Active Users',
+                data: sortedData.map(d => d.active_users),
+                borderColor: colors.purple,
+                backgroundColor: colors.purple + '20',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Active Users: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Active Users',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// MAU Comprehensive Chart
+async function loadMAUComprehensiveChart() {
+    const data = await fetchData('active-users/monthly-comprehensive');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('mauComprehensiveChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatMonth(d.month)),
+            datasets: [{
+                label: 'Active Users',
+                data: sortedData.map(d => d.active_users),
+                borderColor: colors.teal,
+                backgroundColor: colors.teal + '20',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Active Users: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Active Users',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Active Users by Type (Standard vs Finder)
+async function loadActiveUsersByTypeChart() {
+    const data = await fetchData('active-users/by-user-type');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activeUsersByTypeChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const userTypes = [...new Set(data.map(d => d.user_type))];
+    
+    const datasets = userTypes.map((type, index) => {
+        const typeData = months.map(month => {
+            const row = data.find(d => d.month === month && d.user_type === type);
+            return row ? row.active_users : 0;
+        });
+        
+        return {
+            label: type,
+            data: typeData,
+            backgroundColor: index === 0 ? colors.primary + '80' : colors.warning + '80',
+            borderColor: index === 0 ? colors.primary : colors.warning,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' users';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: false
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Active Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: false
+                }
+            }
+        }
+    });
+}
+
+// Collections by Privacy (Public vs Private)
+async function loadCollectionsPrivacyChart() {
+    const data = await fetchData('collections/created-by-privacy');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('collectionsPrivacyChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const privacyTypes = [...new Set(data.map(d => d.privacy_type))];
+    
+    const datasets = privacyTypes.map((type, index) => {
+        const typeData = months.map(month => {
+            const row = data.find(d => d.month === month && d.privacy_type === type);
+            return row ? row.collections_created : 0;
+        });
+        
+        const colorMap = {
+            'public': colors.success,
+            'private': colors.info,
+            'Not Set': '#999'
+        };
+        const color = colorMap[type.toLowerCase()] || chartColors[index];
+        
+        return {
+            label: type,
+            data: typeData,
+            backgroundColor: color + '80',
+            borderColor: color,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' collections';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Collections Created',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                }
+            }
+        }
+    });
+}
+
 // =============================================================================
 // INITIALIZE DASHBOARD
 // =============================================================================
@@ -1712,6 +1967,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDAUChart();
     loadMAUChart();
     loadMAUByCountryChart();
+    loadDAUComprehensiveChart();
+    loadMAUComprehensiveChart();
+    loadActiveUsersByTypeChart();
     
     // Engagement metrics
     loadPostFrequencyChart();
@@ -1731,6 +1989,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadProfileAdditionsChart();
     loadCollectionsCreatedChart();
     loadCollectionsSharedChart();
+    loadCollectionsPrivacyChart();
     
     // Profile metrics
     loadProfileCompletionChart();

@@ -195,6 +195,76 @@ def active_users_monthly():
     results = execute_query(conn, query)
     return jsonify(results)
 
+@app.route('/api/active-users/daily-comprehensive')
+def active_users_daily_comprehensive():
+    """Get comprehensive daily active users (DAU) - all activity types from ChemLink DB"""
+    query = """
+        SELECT 
+            DATE(activity_date) as date,
+            COUNT(DISTINCT person_id) as active_users
+        FROM (
+            SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            UNION ALL
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            UNION ALL
+            SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            UNION ALL
+            SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= CURRENT_DATE - INTERVAL '30 days' AND updated_at != created_at
+        ) daily_activity
+        GROUP BY DATE(activity_date)
+        ORDER BY date DESC;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/active-users/monthly-comprehensive')
+def active_users_monthly_comprehensive():
+    """Get comprehensive monthly active users (MAU) - all activity types from ChemLink DB"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', activity_date) as month,
+            COUNT(DISTINCT person_id) as active_users
+        FROM (
+            SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months' AND updated_at != created_at
+        ) monthly_activity
+        GROUP BY DATE_TRUNC('month', activity_date)
+        ORDER BY month DESC;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/active-users/by-user-type')
+def active_users_by_user_type():
+    """Get active users segmented by Standard vs Finder users"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', activity_date) as month,
+            CASE WHEN has_finder THEN 'Finder Users' ELSE 'Standard Users' END as user_type,
+            COUNT(DISTINCT activity.person_id) as active_users
+        FROM (
+            SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        ) activity
+        JOIN persons p ON activity.person_id = p.id
+        WHERE p.deleted_at IS NULL
+        GROUP BY month, has_finder
+        ORDER BY month DESC, user_type;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
 @app.route('/api/active-users/monthly-by-country')
 def active_users_monthly_by_country():
     """Get monthly active users by country using cross-database join"""
@@ -978,6 +1048,24 @@ def collections_created():
         "privacy_breakdown": privacy,
         "total_count": total[0]['total_collections'] if total else 0
     })
+
+@app.route('/api/collections/created-by-privacy')
+def collections_created_by_privacy():
+    """Get collections created over time segmented by privacy (Public vs Private)"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COALESCE(privacy, 'Not Set') as privacy_type,
+            COUNT(*) as collections_created
+        FROM collections
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        GROUP BY month, privacy
+        ORDER BY month DESC, privacy;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
 
 @app.route('/api/collections/shared')
 def collections_shared():

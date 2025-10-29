@@ -143,6 +143,42 @@
                     <canvas id="mauByCountryChart"></canvas>
                 </div>
             </div>
+
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="dau-comprehensive">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>DAU - Comprehensive (All Activity Types)</h3>
+                    <button class="sql-button" onclick="showSQLModal('dau_comprehensive')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Track ALL user activities: profile views, searches, votes, collections, and profile updates</span>
+                    </div>
+                    <canvas id="dauComprehensiveChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="mau-comprehensive">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>MAU - Comprehensive (All Activity Types)</h3>
+                    <button class="sql-button" onclick="showSQLModal('mau_comprehensive')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Complete picture of monthly engagement across all platform features</span>
+                    </div>
+                    <canvas id="mauComprehensiveChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="user-type">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Active Users by Type (Standard vs Finder)</h3>
+                    <button class="sql-button" onclick="showSQLModal('user_type')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Understand adoption and engagement of Finder (AI-powered) vs Standard users</span>
+                    </div>
+                    <canvas id="activeUsersByTypeChart"></canvas>
+                </div>
+            </div>
         </section>
 
         <!-- User Engagement -->
@@ -422,6 +458,19 @@
                         <p><code>collection_collaborators table</code></p>
                     </div>
                     <canvas id="collectionsSharedChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="collections-privacy">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Collections Created by Privacy (Public vs Private)</h3>
+                    <button class="sql-button" onclick="showSQLModal('collections_privacy')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Understand whether users create private collections (personal) or public (community sharing)</span>
+                    </div>
+                    <canvas id="collectionsPrivacyChart"></canvas>
                 </div>
             </div>
         </section>

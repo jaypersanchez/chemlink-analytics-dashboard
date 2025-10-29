@@ -437,5 +437,81 @@ WHERE deleted_at IS NULL;
 SELECT 
     (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL)::float / 
     NULLIF((SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 0) * 100 as engagement_rate_pct;"""
+    },
+    "dau_comprehensive": {
+        "name": "DAU - Comprehensive (All Activity Types)",
+        "database": "ChemLink DB",
+        "query": """-- Daily Active Users tracking ALL activity types
+SELECT 
+    DATE(activity_date) as date,
+    COUNT(DISTINCT person_id) as active_users
+FROM (
+    SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT person_id, created_at FROM query_votes WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT person_id, created_at FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT person_id, created_at FROM query_embeddings WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= CURRENT_DATE - INTERVAL '30 days' AND updated_at != created_at
+) daily_activity
+GROUP BY DATE(activity_date)
+ORDER BY date DESC;"""
+    },
+    "mau_comprehensive": {
+        "name": "MAU - Comprehensive (All Activity Types)",
+        "database": "ChemLink DB",
+        "query": """-- Monthly Active Users tracking ALL activity types
+SELECT 
+    DATE_TRUNC('month', activity_date) as month,
+    COUNT(DISTINCT person_id) as active_users
+FROM (
+    SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at FROM query_embeddings WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months' AND updated_at != created_at
+) monthly_activity
+GROUP BY DATE_TRUNC('month', activity_date)
+ORDER BY month DESC;"""
+    },
+    "user_type": {
+        "name": "Active Users by Type (Standard vs Finder)",
+        "database": "ChemLink DB",
+        "query": """-- Active users segmented by Standard vs Finder
+SELECT 
+    DATE_TRUNC('month', activity_date) as month,
+    CASE WHEN has_finder THEN 'Finder Users' ELSE 'Standard Users' END as user_type,
+    COUNT(DISTINCT activity.person_id) as active_users
+FROM (
+    SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+) activity
+JOIN persons p ON activity.person_id = p.id
+WHERE p.deleted_at IS NULL
+GROUP BY month, has_finder
+ORDER BY month DESC, user_type;"""
+    },
+    "collections_privacy": {
+        "name": "Collections Created by Privacy (Public vs Private)",
+        "database": "ChemLink DB",
+        "query": """-- Collections segmented by privacy type over time
+SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COALESCE(privacy, 'Not Set') as privacy_type,
+    COUNT(*) as collections_created
+FROM collections
+WHERE deleted_at IS NULL
+  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+GROUP BY month, privacy
+ORDER BY month DESC, privacy;"""
     }
 }
