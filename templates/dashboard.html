@@ -308,6 +308,80 @@
             </div>
         </section>
 
+        <!-- Activity Type Analytics -->
+        <section class="metrics-section category-activity">
+            <div class="category-header">
+                <h2>📊 Activity Type Analytics</h2>
+                <p class="category-description">Understand what actions users are taking and their engagement intensity</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="activity-by-type-monthly">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Monthly Active Users by Activity Type</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">See which activities users perform - posting vs commenting trends</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📊 MAU by Activity Type</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Monthly breakdown of unique users by activity type (posts vs comments). Stacked bars show composition of engagement.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Stacked bars show how many users posted vs commented each month. Growing comment stack = improving engagement depth.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Understand if users are just broadcasting (posting) or actually engaging (commenting). Comments = stronger community bonds.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>posts + comments from Engagement DB</code></p>
+                    </div>
+                    <canvas id="activityByTypeMonthlyChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="activity-distribution">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Activity Distribution - Current Month</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">What percentage of users post vs comment this month?</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🥧 Activity Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Pie chart showing percentage breakdown of users by activity type for the current month.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Slice sizes show activity mix. 100% posting = one-way broadcast. Balanced = healthy discussions.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Dominated by posting = echo chamber. Need commenting to create network effects and retention.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Current month posts + comments</code></p>
+                    </div>
+                    <canvas id="activityDistributionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="activity-intensity">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>User Engagement Intensity Levels</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">How many power users vs casual users do we have each month?</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔥 Engagement Intensity</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Users categorized by activity level: Power Users (20+), Active (10-19), Regular (5-9), Casual (1-4) activities per month.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Stacked bars show user distribution across intensity tiers. Growing Power User segment = platform maturity.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Power users drive 80% of platform value. Track growth of this segment to measure engagement quality, not just quantity.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>User activity counts categorized by thresholds</code></p>
+                    </div>
+                    <canvas id="activityIntensityLevelsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <!-- Feature Adoption & Funnels -->
         <section class="metrics-section category-funnel">
             <div class="category-header">

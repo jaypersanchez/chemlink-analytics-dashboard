@@ -1953,6 +1953,221 @@ async function loadCollectionsPrivacyChart() {
 }
 
 // =============================================================================
+// ACTIVITY TYPE ANALYTICS
+// =============================================================================
+
+// Activity by Type Monthly Chart
+async function loadActivityByTypeMonthlyChart() {
+    const data = await fetchData('activity/by-type-monthly');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activityByTypeMonthlyChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const activityTypes = [...new Set(data.map(d => d.activity_type))];
+    
+    const datasets = activityTypes.map((type, index) => {
+        const typeData = months.map(month => {
+            const row = data.find(d => d.month === month && d.activity_type === type);
+            return row ? row.unique_users : 0;
+        });
+        
+        const colorMap = {
+            'post': colors.primary,
+            'comment': colors.success
+        };
+        const color = colorMap[type.toLowerCase()] || chartColors[index];
+        
+        return {
+            label: type.charAt(0).toUpperCase() + type.slice(1) + 's',
+            data: typeData,
+            backgroundColor: color + '80',
+            borderColor: color,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.reverse().map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' users';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Unique Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Activity Distribution Chart (Donut)
+async function loadActivityDistributionChart() {
+    const data = await fetchData('activity/distribution-current');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activityDistributionChart').getContext('2d');
+    
+    const labels = data.map(d => d.activity_type.charAt(0).toUpperCase() + d.activity_type.slice(1) + 's');
+    const values = data.map(d => d.unique_users);
+    const percentages = data.map(d => d.percentage);
+    
+    const colorMap = {
+        'Posts': colors.primary,
+        'Comments': colors.success
+    };
+    const backgroundColors = labels.map(label => colorMap[label] || chartColors[labels.indexOf(label)]);
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const percentage = percentages[context.dataIndex];
+                            return label + ': ' + value.toLocaleString() + ' users (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Activity Intensity Levels Chart
+async function loadActivityIntensityLevelsChart() {
+    const data = await fetchData('activity/intensity-levels');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activityIntensityLevelsChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const intensityLevels = ['Power User (20+)', 'Active User (10-19)', 'Regular User (5-9)', 'Casual User (1-4)'];
+    
+    const datasets = intensityLevels.map((level, index) => {
+        const levelData = months.map(month => {
+            const row = data.find(d => d.month === month && d.intensity_level === level);
+            return row ? row.user_count : 0;
+        });
+        
+        const colorMap = {
+            'Power User (20+)': colors.danger,
+            'Active User (10-19)': colors.warning,
+            'Regular User (5-9)': colors.info,
+            'Casual User (1-4)': colors.success
+        };
+        const color = colorMap[level] || chartColors[index];
+        
+        return {
+            label: level,
+            data: levelData,
+            backgroundColor: color + '80',
+            borderColor: color,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.reverse().map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' users';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
 // INITIALIZE DASHBOARD
 // =============================================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -1976,6 +2191,11 @@ document.addEventListener('DOMContentLoaded', function() {
     loadEngagementRateChart();
     loadContentTypeChart();
     loadActivePostersChart();
+    
+    // Activity type analytics
+    loadActivityByTypeMonthlyChart();
+    loadActivityDistributionChart();
+    loadActivityIntensityLevelsChart();
     
     // Funnel analytics
     loadAccountFunnelChart();

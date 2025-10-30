@@ -707,6 +707,135 @@ def top_skills_projects():
     return jsonify(results)
 
 # ============================================================================
+# ACTIVITY TYPE ANALYTICS
+# ============================================================================
+
+@app.route('/api/activity/by-type-monthly')
+def activity_by_type_monthly():
+    """Get monthly active users segmented by activity type (Engagement DB)"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', activity_date) as month,
+            activity_type,
+            COUNT(DISTINCT person_id) as unique_users,
+            COUNT(*) as total_activities
+        FROM (
+            SELECT person_id, created_at as activity_date, 'post' as activity_type 
+            FROM posts 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT person_id, created_at, 'comment' 
+            FROM comments 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        ) monthly_activity
+        GROUP BY DATE_TRUNC('month', activity_date), activity_type
+        ORDER BY month DESC, activity_type;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/activity/distribution-current')
+def activity_distribution_current():
+    """Get activity distribution percentages for current month (Engagement DB)"""
+    query = """
+        WITH activity_counts AS (
+            SELECT 
+                activity_type,
+                COUNT(DISTINCT person_id) as unique_users
+            FROM (
+                SELECT person_id, 'post' as activity_type 
+                FROM posts 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+                UNION ALL
+                SELECT person_id, 'comment' 
+                FROM comments 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+            ) current_month_activity
+            GROUP BY activity_type
+        ),
+        monthly_total AS (
+            SELECT SUM(unique_users) as total_active_users
+            FROM activity_counts
+        )
+        SELECT 
+            ac.activity_type,
+            ac.unique_users,
+            mt.total_active_users,
+            ROUND((ac.unique_users::numeric / NULLIF(mt.total_active_users, 0)) * 100, 2) as percentage
+        FROM activity_counts ac
+        CROSS JOIN monthly_total mt
+        ORDER BY ac.unique_users DESC;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/activity/intensity-levels')
+def activity_intensity_levels():
+    """Get user engagement intensity levels over time (Engagement DB)"""
+    query = """
+        WITH user_activity_counts AS (
+            SELECT 
+                DATE_TRUNC('month', activity_date) as month,
+                person_id,
+                COUNT(*) as total_activities,
+                COUNT(CASE WHEN activity_type = 'post' THEN 1 END) as post_count,
+                COUNT(CASE WHEN activity_type = 'comment' THEN 1 END) as comment_count
+            FROM (
+                SELECT person_id, created_at as activity_date, 'post' as activity_type 
+                FROM posts 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+                UNION ALL
+                SELECT person_id, created_at, 'comment' 
+                FROM comments 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            ) all_activity
+            GROUP BY month, person_id
+        ),
+        intensity_categorized AS (
+            SELECT 
+                month,
+                person_id,
+                total_activities,
+                post_count,
+                comment_count,
+                CASE 
+                    WHEN total_activities >= 20 THEN 'Power User (20+)'
+                    WHEN total_activities >= 10 THEN 'Active User (10-19)'
+                    WHEN total_activities >= 5 THEN 'Regular User (5-9)'
+                    ELSE 'Casual User (1-4)'
+                END as intensity_level
+            FROM user_activity_counts
+        )
+        SELECT 
+            month,
+            intensity_level,
+            COUNT(DISTINCT person_id) as user_count,
+            ROUND(AVG(total_activities), 2) as avg_activities_per_user,
+            ROUND(AVG(post_count), 2) as avg_posts_per_user,
+            ROUND(AVG(comment_count), 2) as avg_comments_per_user
+        FROM intensity_categorized
+        GROUP BY month, intensity_level
+        ORDER BY month DESC, 
+            CASE intensity_level
+                WHEN 'Power User (20+)' THEN 1
+                WHEN 'Active User (10-19)' THEN 2
+                WHEN 'Regular User (5-9)' THEN 3
+                ELSE 4
+            END;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+# ============================================================================
 # METADATA & SQL QUERIES ENDPOINTS
 # ============================================================================
 
