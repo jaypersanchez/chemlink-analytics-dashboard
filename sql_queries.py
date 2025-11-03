@@ -464,19 +464,19 @@ SELECT
         "name": "DAU - Comprehensive (All Activity Types)",
         "database": "ChemLink DB",
         "query": """-- Daily Active Users tracking ALL activity types
+-- NOTE: query_votes has NO deleted_at column
+-- NOTE: query_embeddings has NO person tracking (system-level data)
 SELECT 
     DATE(activity_date) as date,
     COUNT(DISTINCT person_id) as active_users
 FROM (
     SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
     UNION ALL
-    SELECT person_id, created_at FROM query_votes WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
     UNION ALL
-    SELECT person_id, created_at FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
     UNION ALL
-    SELECT person_id, created_at FROM query_embeddings WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
-    UNION ALL
-    SELECT person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= CURRENT_DATE - INTERVAL '30 days' AND updated_at != created_at
+    SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= CURRENT_DATE - INTERVAL '30 days' AND updated_at != created_at
 ) daily_activity
 GROUP BY DATE(activity_date)
 ORDER BY date DESC;"""
@@ -485,19 +485,19 @@ ORDER BY date DESC;"""
         "name": "MAU - Comprehensive (All Activity Types)",
         "database": "ChemLink DB",
         "query": """-- Monthly Active Users tracking ALL activity types
+-- NOTE: query_votes has NO deleted_at column
+-- NOTE: query_embeddings has NO person tracking (system-level data)
 SELECT 
     DATE_TRUNC('month', activity_date) as month,
     COUNT(DISTINCT person_id) as active_users
 FROM (
     SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
-    SELECT person_id, created_at FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
-    SELECT person_id, created_at FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
-    SELECT person_id, created_at FROM query_embeddings WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
-    UNION ALL
-    SELECT person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months' AND updated_at != created_at
+    SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months' AND updated_at != created_at
 ) monthly_activity
 GROUP BY DATE_TRUNC('month', activity_date)
 ORDER BY month DESC;"""
@@ -506,6 +506,7 @@ ORDER BY month DESC;"""
         "name": "Active Users by Type (Standard vs Finder)",
         "database": "ChemLink DB",
         "query": """-- Active users segmented by Standard vs Finder
+-- NOTE: query_votes has NO deleted_at column, uses voter_id not person_id
 SELECT 
     DATE_TRUNC('month', activity_date) as month,
     CASE WHEN has_finder THEN 'Finder Users' ELSE 'Standard Users' END as user_type,
@@ -513,9 +514,9 @@ SELECT
 FROM (
     SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
-    SELECT person_id, created_at FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
-    SELECT person_id, created_at FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
 ) activity
 JOIN persons p ON activity.person_id = p.id
 WHERE p.deleted_at IS NULL

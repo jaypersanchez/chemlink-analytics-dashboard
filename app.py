@@ -205,7 +205,7 @@ def active_users_daily_comprehensive():
         FROM (
             SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
             UNION ALL
-            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
             UNION ALL
             SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
             UNION ALL
@@ -228,7 +228,7 @@ def active_users_monthly_comprehensive():
         FROM (
             SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
-            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
             SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
@@ -252,7 +252,7 @@ def active_users_by_user_type():
         FROM (
             SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
-            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
             SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
         ) activity
