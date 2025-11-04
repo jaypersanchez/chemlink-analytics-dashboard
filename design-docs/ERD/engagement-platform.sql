@@ -10,6 +10,8 @@
 -- ==============================================================================
 -- 1. SEARCH FOR SPECIFIC USER PROFILES
 -- ==============================================================================
+select * from persons
+
 -- Search for specific email addresses in the social platform
 SELECT 
     id,
