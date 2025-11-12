@@ -41,6 +41,32 @@ SELECT
 FROM monthly_users 
 ORDER BY month DESC;"""
     },
+    "login_velocity_hourly": {
+        "name": "Login Velocity (Hourly)",
+        "database": "Kratos Identity DB",
+        "query": """SELECT
+    DATE_TRUNC('hour', authenticated_at) AS hour_bucket,
+    COUNT(*) AS sessions_started
+FROM sessions
+WHERE authenticated_at >= NOW() - INTERVAL '24 hours'
+GROUP BY hour_bucket
+ORDER BY hour_bucket DESC
+LIMIT 24;"""
+    },
+    "unique_identities_daily": {
+        "name": "Unique Authenticated Identities (Daily)",
+        "database": "Kratos Identity DB",
+        "query": """-- Distinct Kratos identities that authenticated each day (rolling 30 days)
+SELECT
+    DATE_TRUNC('day', authenticated_at) AS day_bucket,
+    COUNT(DISTINCT identity_id) AS unique_identities,
+    COUNT(*) AS sessions_started
+FROM sessions
+WHERE authenticated_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY day_bucket
+ORDER BY day_bucket DESC
+LIMIT 30;"""
+    },
     "dau": {
         "name": "Daily Active Users (DAU)",
         "database": "Engagement DB",

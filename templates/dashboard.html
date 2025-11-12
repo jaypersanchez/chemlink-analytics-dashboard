@@ -190,6 +190,52 @@
             </div>
 
             <div class="chart-row">
+                <div class="chart-container full-width hidden-chart" data-tooltip="login-velocity">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Login Velocity (Past 24 Hours)</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't have real-time visibility into authentication spikes or drop-offs to catch outages early</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔐 Login Velocity (Hourly)</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Number of sessions Kratos issued each hour over the last 24 hours. Each point represents successful logins in that hour.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Look for sudden dips (potential outages) or spikes (campaigns, brute-force attempts). Flat lines may mean no one is signing in.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Support and ops teams can't see authentication health without digging into logs. This exposes issues before customers file tickets.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>sessions table from chemonics-kratos-prd (grouped hourly)</code></p>
+                    </div>
+                    <canvas id="loginVelocityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width hidden-chart" data-tooltip="unique-identities">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Authenticated Users (Unique Identities - 30 Days)</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Compare real sign-ins vs in-app DAU to spot drift between identity and engagement systems</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🧍 Unique Authenticated Identities</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Daily count of distinct Kratos identities that successfully signed in. Highlights the true number of people passing authentication each day.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Trend this line against DAU to ensure every authenticated user shows up in product usage. Divergence can signal tracking gaps or sign-in issues.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without visibility into identity-level traffic, outages or mismatched IDs between systems go unnoticed until users complain.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Kratos sessions table (distinct identity_id per day)</code></p>
+                    </div>
+                    <canvas id="uniqueIdentitiesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
                 <div class="chart-container full-width" data-tooltip="user-type">
                     <div class="info-icon">ℹ️</div>
                     <h3>Active Users by Type (Standard vs Finder)</h3>

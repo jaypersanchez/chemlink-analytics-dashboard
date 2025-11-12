@@ -23,6 +23,8 @@ function addSQLButtonsToCharts() {
     const chartToQueryMap = {
         'newUsersMonthlyChart': 'new_users_monthly',
         'growthRateChart': 'growth_rate_monthly',
+        'loginVelocityChart': 'login_velocity_hourly',
+        'uniqueIdentitiesChart': 'unique_identities_daily',
         'dauChart': 'dau',
         'mauChart': 'mau',
         'mauByCountryChart': 'mau_by_country',

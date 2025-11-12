@@ -12,6 +12,10 @@ body {
     color: #333;
 }
 
+.hidden-chart {
+    display: none !important;
+}
+
 .container {
     max-width: 1400px;
     margin: 0 auto;

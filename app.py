@@ -1,7 +1,15 @@
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
-from db_config import get_engagement_db_connection, get_chemlink_env_connection, execute_query
+from db_config import (
+    get_engagement_db_connection,
+    get_chemlink_env_connection,
+    get_kratos_db_connection,
+    execute_query,
+)
 import json
+import os
+import psycopg2
+import psycopg2.extras
 from datetime import datetime
 from sql_queries import SQL_QUERIES
 
@@ -16,6 +24,35 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 app.json_encoder = DateTimeEncoder
+
+# ============================================================================
+# V2 ANALYTICS DATABASE CONNECTION
+# ============================================================================
+
+def get_analytics_db_connection():
+    """Connect to local analytics database for V2"""
+    return psycopg2.connect(
+        host=os.getenv('ANALYTICS_DB_HOST', 'localhost'),
+        database='chemlink_analytics',
+        user=os.getenv('ANALYTICS_DB_USER', 'postgres'),
+        password=os.getenv('ANALYTICS_DB_PASSWORD', 'postgres'),
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+
+def execute_analytics_query(query):
+    """Execute query on analytics DB and return results"""
+    conn = get_analytics_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            results = cursor.fetchall()
+            for row in results:
+                for key, value in row.items():
+                    if isinstance(value, datetime):
+                        row[key] = value.isoformat()
+            return results
+    finally:
+        conn.close()
 
 # ============================================================================
 # GROWTH METRICS ROUTES
@@ -123,6 +160,41 @@ def growth_rate_monthly():
         ORDER BY month DESC;
     """
     conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/auth/login-velocity/hourly')
+def login_velocity_hourly():
+    """Get hourly login velocity from Kratos (identity) sessions"""
+    query = """
+        SELECT
+            DATE_TRUNC('hour', authenticated_at) AS hour_bucket,
+            COUNT(*) AS sessions_started
+        FROM sessions
+        WHERE authenticated_at >= NOW() - INTERVAL '24 hours'
+        GROUP BY hour_bucket
+        ORDER BY hour_bucket DESC
+        LIMIT 24;
+    """
+    conn = get_kratos_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/auth/unique-identities/daily')
+def unique_identities_daily():
+    """Get daily unique identities who authenticated via Kratos"""
+    query = """
+        SELECT
+            DATE_TRUNC('day', authenticated_at) AS day_bucket,
+            COUNT(DISTINCT identity_id) AS unique_identities,
+            COUNT(*) AS sessions_started
+        FROM sessions
+        WHERE authenticated_at >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY day_bucket
+        ORDER BY day_bucket DESC
+        LIMIT 30;
+    """
+    conn = get_kratos_db_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -1242,6 +1314,287 @@ def collections_shared():
 def index():
     """Main dashboard page"""
     return render_template('dashboard.html')
+
+# ============================================================================
+# V2 DASHBOARD - AGGREGATED METRICS
+# ============================================================================
+
+@app.route('/v2')
+def dashboard_v2():
+    """V2 Dashboard using aggregated metrics"""
+    return render_template('v2/index.html')
+
+@app.route('/v2/api/new-users/daily')
+def v2_new_users_daily():
+    query = """
+        SELECT metric_date as date, new_signups, new_finder_signups, 
+               new_standard_signups, total_users_cumulative
+        FROM aggregates.daily_metrics
+        WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY metric_date DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/new-users/monthly')
+def v2_new_users_monthly():
+    query = """
+        SELECT metric_month as month, new_signups, 
+               total_users_end_of_month, growth_rate_pct
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/growth-rate/monthly')
+def v2_growth_rate_monthly():
+    query = """
+        SELECT metric_month as month, new_signups, growth_rate_pct
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/active-users/daily')
+def v2_active_users_daily():
+    query = """
+        SELECT metric_date as date, dau, active_posters, active_commenters,
+               active_voters, active_collectors, engagement_rate
+        FROM aggregates.daily_metrics
+        WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY metric_date DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/active-users/monthly')
+def v2_active_users_monthly():
+    query = """
+        SELECT metric_month as month, mau, avg_dau, finder_mau,
+               standard_mau, activation_rate
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/engagement/daily')
+def v2_engagement_daily():
+    query = """
+        SELECT metric_date as date, posts_created, comments_created,
+               votes_cast, collections_created, views_given,
+               engagement_rate, social_engagement_rate
+        FROM aggregates.daily_metrics
+        WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY metric_date DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/engagement/monthly')
+def v2_engagement_monthly():
+    query = """
+        SELECT metric_month as month, total_posts, total_comments,
+               total_votes, total_collections, avg_activities_per_user,
+               avg_engagement_score, activation_rate
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/users/segmentation')
+def v2_user_segmentation():
+    query = """
+        SELECT engagement_level, COUNT(*) as user_count,
+               ROUND(AVG(engagement_score), 2) as avg_score,
+               ROUND(AVG(total_activities), 2) as avg_activities
+        FROM aggregates.user_engagement_levels
+        GROUP BY engagement_level
+        ORDER BY CASE engagement_level
+            WHEN 'POWER_USER' THEN 1
+            WHEN 'ACTIVE' THEN 2
+            WHEN 'CASUAL' THEN 3
+            WHEN 'LURKER' THEN 4
+            ELSE 5 END;
+    """
+    return jsonify(execute_analytics_query(query))
+
+# ============================================================================
+# NEO4J GRAPH ANALYTICS ROUTES
+# ============================================================================
+
+@app.route('/v2/api/graph/connection-recommendations')
+def graph_connection_recommendations():
+    """Get connection recommendations (People You Should Know)"""
+    query = """
+        SELECT 
+            user_id,
+            recommended_user_id,
+            recommendation_score,
+            common_companies,
+            common_roles,
+            common_schools,
+            recommendation_reason
+        FROM aggregates.connection_recommendations
+        ORDER BY recommendation_score DESC
+        LIMIT 500;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/connection-recommendations/<int:user_id>')
+def graph_connection_recommendations_for_user(user_id):
+    """Get connection recommendations for specific user"""
+    query = f"""
+        SELECT 
+            user_id,
+            recommended_user_id,
+            recommendation_score,
+            common_companies,
+            common_roles,
+            common_schools,
+            recommendation_reason
+        FROM aggregates.connection_recommendations
+        WHERE user_id = {user_id}
+        ORDER BY recommendation_score DESC
+        LIMIT 50;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/company-network')
+def graph_company_network():
+    """Get company network map showing connections between companies"""
+    query = """
+        SELECT 
+            company_id_1,
+            company_id_2,
+            company_name_1,
+            company_name_2,
+            shared_employee_count,
+            employee_ids,
+            network_strength_score
+        FROM aggregates.company_network_map
+        ORDER BY shared_employee_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/company-network/<company_name>')
+def graph_company_network_for_company(company_name):
+    """Get company network connections for specific company"""
+    query = f"""
+        SELECT 
+            company_id_1,
+            company_id_2,
+            company_name_1,
+            company_name_2,
+            shared_employee_count,
+            network_strength_score
+        FROM aggregates.company_network_map
+        WHERE company_name_1 ILIKE '%{company_name}%' 
+           OR company_name_2 ILIKE '%{company_name}%'
+        ORDER BY shared_employee_count DESC
+        LIMIT 100;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/skills-matching')
+def graph_skills_matching():
+    """Get skills matching scores for all users and roles"""
+    query = """
+        SELECT 
+            user_id,
+            role_id,
+            role_title,
+            experience_years,
+            proficiency_score,
+            similar_user_count
+        FROM aggregates.skills_matching_scores
+        ORDER BY proficiency_score DESC
+        LIMIT 500;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/skills-matching/<int:user_id>')
+def graph_skills_matching_for_user(user_id):
+    """Get skills matching scores for specific user"""
+    query = f"""
+        SELECT 
+            user_id,
+            role_id,
+            role_title,
+            experience_years,
+            proficiency_score,
+            similar_user_count
+        FROM aggregates.skills_matching_scores
+        WHERE user_id = {user_id}
+        ORDER BY proficiency_score DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/career-paths')
+def graph_career_paths():
+    """Get career path patterns showing common progressions"""
+    query = """
+        SELECT 
+            path_vector,
+            role_sequence,
+            user_count,
+            user_ids,
+            avg_years_per_role
+        FROM aggregates.career_path_patterns
+        ORDER BY user_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/location-networks')
+def graph_location_networks():
+    """Get location-based professional networks"""
+    query = """
+        SELECT 
+            location_id,
+            country,
+            user_count,
+            company_diversity_score,
+            role_diversity_score,
+            top_companies,
+            top_roles
+        FROM aggregates.location_based_networks
+        ORDER BY user_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/alumni-networks')
+def graph_alumni_networks():
+    """Get alumni networks by school and degree"""
+    query = """
+        SELECT 
+            school_id,
+            school_name,
+            degree_id,
+            degree_name,
+            alumni_count,
+            graduation_year_min,
+            graduation_year_max,
+            current_companies,
+            current_roles
+        FROM aggregates.alumni_networks
+        WHERE alumni_count > 0
+        ORDER BY alumni_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/project-collaborations')
+def graph_project_collaborations():
+    """Get project collaboration networks"""
+    query = """
+        SELECT 
+            project_id,
+            project_name,
+            company_id,
+            company_name,
+            user_count,
+            role_ids,
+            collaboration_strength
+        FROM aggregates.project_collaboration_graph
+        WHERE user_count > 0
+        ORDER BY user_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
 
 if __name__ == '__main__':
     import os

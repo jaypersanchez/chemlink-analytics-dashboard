@@ -29,6 +29,11 @@ function formatMonth(dateString) {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
 }
 
+function formatHour(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', hour12: true });
+}
+
 // API fetch helper
 async function fetchData(endpoint) {
     try {
@@ -187,6 +192,152 @@ async function loadGrowthRateChart() {
                     ticks: {
                         callback: function(value) {
                             return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Login velocity chart (Kratos sessions)
+async function loadLoginVelocityChart() {
+    const data = await fetchData('auth/login-velocity/hourly');
+    if (!data || data.length === 0) return;
+
+    const canvas = document.getElementById('loginVelocityChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const sortedData = [...data].reverse();
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatHour(d.hour_bucket)),
+            datasets: [{
+                label: 'Sign-ins Started',
+                data: sortedData.map(d => d.sessions_started),
+                borderColor: colors.info,
+                backgroundColor: colors.info + '33',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} users`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hour of Day (last 24h)',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Sign-ins Started per Hour',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Unique authenticated identities (Kratos)
+async function loadUniqueIdentitiesChart() {
+    const data = await fetchData('auth/unique-identities/daily');
+    if (!data || data.length === 0) return;
+
+    const canvas = document.getElementById('uniqueIdentitiesChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const sortedData = [...data].reverse();
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatDate(d.day_bucket)),
+            datasets: [{
+                label: 'Unique Authenticated Users',
+                data: sortedData.map(d => d.unique_identities),
+                borderColor: colors.success,
+                backgroundColor: colors.success + '22',
+                borderWidth: 3,
+                tension: 0.35,
+                pointRadius: 3,
+                fill: true
+            }, {
+                label: 'Sign-ins Started',
+                data: sortedData.map(d => d.sessions_started),
+                borderColor: colors.info,
+                borderDash: [6, 4],
+                fill: false,
+                borderWidth: 2,
+                tension: 0.25,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            return `${label}: ${context.parsed.y.toLocaleString()} users`;
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date (Last 30 Days)',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Unique Authenticated Users / Sign-ins',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
                         }
                     }
                 }
@@ -2179,6 +2330,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Growth metrics
     loadNewUsersMonthlyChart();
     loadGrowthRateChart();
+    loadLoginVelocityChart();
+    loadUniqueIdentitiesChart();
     loadDAUChart();
     loadMAUChart();
     loadMAUByCountryChart();
