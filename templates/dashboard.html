@@ -42,7 +42,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>This chart displays the total number of new users who signed up each month. Each bar represents one month's worth of new registrations.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Higher bars = more new sign-ups that month. Look for upward trends to see if your user acquisition is growing.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Users</strong> (absolute numbers, not percentages or ratios)<br>
+                        <code>Count = Number of users with created_at in that month</code></p>
+                        <p><strong>Example:</strong> A bar at 150 means exactly 150 new users signed up that month.</p>
+                        <p>Higher bars = more new sign-ups. Look for upward trends (month-over-month growth) or sudden spikes/dips (may indicate marketing campaigns or technical issues).</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Without this data, you can't tell if marketing campaigns are effective or how you compare to competitors in growth speed.</p>
                         <h4>💾 Data Source</h4>
@@ -62,7 +65,11 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>This shows the percentage change in new users compared to the previous month. It reveals if your growth is accelerating or slowing down.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Positive % = growth, Negative % = decline. A line trending upward means growth is accelerating!</p>
+                        <p><strong>Y-Axis Unit: PERCENTAGE (%)</strong><br>
+                        <code>Growth Rate % = ((Current Month - Previous Month) ÷ Previous Month) × 100</code></p>
+                        <p><strong>Example:</strong> If last month had 100 users and this month has 150:<br>
+                        Growth Rate = ((150 - 100) ÷ 100) × 100 = <strong>50%</strong></p>
+                        <p>Positive % = growth, Negative % = decline. Values above 0% mean you're adding more users each month. A trending-up line means growth is accelerating!</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Investors and board members need to see if momentum is building or fading. This metric is crucial for fundraising and strategic planning.</p>
                         <h4>💾 Data Source</h4>
@@ -85,7 +92,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>The number of unique users who posted or commented each day over the last 30 days. This measures actual platform engagement, not just sign-ups.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Look for patterns: Are weekdays busier? Are there spikes after feature launches or marketing campaigns?</p>
+                        <p><strong>Y-Axis Unit: COUNT of Unique Users</strong> (absolute count, not percentage)<br>
+                        <code>DAU = COUNT(DISTINCT person_id) who posted OR commented on that day</code></p>
+                        <p><strong>Example:</strong> A point at 50 means exactly 50 unique users posted or commented that day.</p>
+                        <p>Look for patterns: Are weekdays busier than weekends? Are there spikes after feature launches or marketing campaigns? Sudden drops may indicate technical issues or user churn.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Without daily metrics, you can't identify which days/times are most active or detect problems like sudden drop-offs in engagement.</p>
                         <h4>💾 Data Source</h4>
@@ -105,7 +115,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Monthly count of unique users who actually used the platform (posted or commented), not just signed up.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>This is your "stickiness" metric. Higher MAU means more users returning regularly. Compare to total sign-ups to see retention rate.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Unique Users</strong> (absolute count per month)<br>
+                        <code>MAU = COUNT(DISTINCT person_id) who posted OR commented in that month</code></p>
+                        <p><strong>Example:</strong> A bar at 500 means 500 unique users were active that month.</p>
+                        <p>This is your "stickiness" metric. Higher MAU = more users returning regularly. Compare to total sign-ups to calculate retention rate (MAU ÷ Total Users × 100%).</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Sign-ups don't equal success. MAU reveals if users find value and keep coming back, or if they register and abandon the platform.</p>
                         <h4>💾 Data Source</h4>
@@ -249,7 +262,11 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Segmentation of active users by whether they have Finder (AI-powered search) enabled vs Standard users. Shows adoption of premium AI features.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Two bars per month: Finder Users (blue) vs Standard Users (orange). Growing Finder segment = successful AI feature adoption and conversion.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Active Users</strong> (absolute count, stacked by user type)<br>
+                        <code>Finder Users = COUNT(users with has_finder=true)<br>
+                        Standard Users = COUNT(users with has_finder=false)</code></p>
+                        <p><strong>Example:</strong> If the bar shows 300 total with 100 blue (Finder) and 200 orange (Standard), that means 100 AI-enabled users and 200 standard users were active that month.</p>
+                        <p>Growing blue (Finder) segment = successful AI feature adoption and conversion. This is your premium feature penetration rate.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Finder is our competitive advantage. Low Finder adoption means users aren't discovering or valuing our AI capabilities. Need to improve onboarding or feature visibility.</p>
                         <h4>💾 Data Source</h4>
@@ -280,7 +297,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Number of posts created each day and how many unique users posted. Tracks content creation momentum.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Upward trend = growing activity. Flat or declining = engagement problem. Check if marketing campaigns or features cause spikes.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Posts</strong> (absolute number of posts created per day)<br>
+                        <code>Posts Created = COUNT(*) FROM posts WHERE DATE(created_at) = that day</code></p>
+                        <p><strong>Example:</strong> A point at 15 means exactly 15 posts were created that day.</p>
+                        <p>Upward trend = growing activity. Flat or declining = engagement problem. Spikes often correlate with marketing campaigns or new feature launches.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Can't tell if your platform is gaining traction or losing steam. Essential for detecting early warning signs of declining engagement.</p>
                         <h4>💾 Data Source</h4>
@@ -300,11 +320,14 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>How many comments each post type gets on average. Shows which content drives the most discussion.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Higher engagement rate = content resonates with users. Use this to guide content strategy and feature development.</p>
+                        <p><strong>Y-axis shows a ratio (NOT a percentage):</strong><br>
+                        <code>Average Comments per Post = Total Comments ÷ Total Posts</code></p>
+                        <p><strong>Example:</strong> If you have 10 posts with 25 total comments, the value is 2.5 (meaning 2.5 comments per post on average).</p>
+                        <p>Higher values = more engagement. A value of 0.00 means no one is commenting on that content type. Compare content types to see what resonates most with your audience.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Without engagement data, you're building features blindly. This shows what actually creates value and community interaction.</p>
                         <h4>💾 Data Source</h4>
-                        <p><code>Comments per post by content type</code></p>
+                        <p><code>Comments per post by content type (last 30 days)</code></p>
                     </div>
                     <canvas id="engagementRateChart"></canvas>
                 </div>
@@ -343,7 +366,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Your top contributors ranked by engagement score (posts + comments weighted). These are your community champions.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Power Users (purple) are critical to platform health. Nurture them with recognition, early features, or partnership opportunities.</p>
+                        <p><strong>Y-Axis Unit: ENGAGEMENT SCORE</strong> (weighted point system)<br>
+                        <code>Engagement Score = (Post Count × 3) + (Comment Count × 2)</code></p>
+                        <p><strong>Example:</strong> A user with 10 posts and 20 comments gets: (10×3) + (20×2) = 30 + 40 = <strong>70 points</strong></p>
+                        <p>Posts are weighted higher (3 points) than comments (2 points) because creating content requires more effort. Higher scores = more valuable contributors. Power Users are critical to platform health - nurture them!</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>10% of users drive 90% of content. Identify and retain these power users or risk losing your entire community.</p>
                         <h4>💾 Data Source</h4>
