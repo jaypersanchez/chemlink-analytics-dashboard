@@ -131,15 +131,42 @@ git clone git@github.com:jaypersanchez/chemlink-analytics-dashboard.git
 cd chemlink-analytics-dashboard
 pip3 install -r requirements.txt
 # Add .env with DB credentials
-./start.sh
+./start.sh [prod|uat|dev]  # Defaults to prod
 ```
+
+### Environment Switching
+**Three environments available:**
+- `./start.sh prod` - Production data (READ-ONLY)
+- `./start.sh uat` - UAT/Staging data (default for testing)
+- `./start.sh dev` - Development data
+
+**Features:**
+- Automatically switches database connections based on environment
+- Uses `caffeinate` to prevent Mac from sleeping during operation
+- Starts ngrok tunnel for public URL access
+- Both Flask app and ngrok stopped with `./stop.sh`
 
 ### Database Credentials
 Stored in `.env` (not in repo for security)
 ```
+# Environment selector
+APP_ENV=prod  # or uat, dev
+
+# UAT/Staging
 CHEMLINK_DB_HOST=...
 CHEMLINK_DB_USER=...
+
+# Production (READ-ONLY)
+CHEMLINK_PRD_DB_HOST=...
+CHEMLINK_PRD_DB_USER=...
+
+# Development
+CHEMLINK_DEV_DB_HOST=...
+CHEMLINK_DEV_DB_USER=...
+
+# Engagement Platform
 ENGAGEMENT_DB_HOST=...
+ENGAGEMENT_DB_USER=...
 ```
 
 ### Project Structure
@@ -185,7 +212,33 @@ static/css/         # Styling
 4. **Extensible**: Adding new metrics follows clear pattern
 5. **Transparent**: No black box - all queries visible
 
-## Recent Changes (October 27, 2025)
+## Recent Changes
+
+### October 29, 2025 - Environment Management & Public Access
+
+#### Environment Switching
+- **Enhanced start.sh**: Now accepts environment parameter (prod/uat/dev)
+- **Dynamic environment loading**: Database connections switch based on APP_ENV
+- **Fixed connection bug**: Routes now use `get_chemlink_env_connection()` instead of hardcoded UAT
+- **Default to prod**: Production is now the default environment
+
+#### Public URL Access
+- **ngrok integration**: Automatically starts tunnel on `./start.sh`
+- **Auto-discovery**: Public URL displayed in terminal on startup
+- **Dashboard access**: http://localhost:4040 for ngrok management
+- **Unified shutdown**: `./stop.sh` now stops both Flask and ngrok
+
+#### System Stability
+- **caffeinate integration**: Prevents Mac from sleeping during operation
+- **Process management**: PID files for both Flask and ngrok
+- **Clean shutdown**: Graceful termination with forced kill fallback
+
+#### Production Data
+- **5 months of data**: June-October 2025 in production
+- **12-month window**: Queries configured for rolling 12 months (returns available data)
+- **Verified metrics**: Monthly growth rate working correctly with prod data
+
+### October 27, 2025 - Query & PII Updates
 
 ### Query Updates
 - **Monthly metrics now show rolling 12-month window** instead of all-time data

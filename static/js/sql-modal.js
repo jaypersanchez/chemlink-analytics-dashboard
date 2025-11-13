@@ -23,6 +23,8 @@ function addSQLButtonsToCharts() {
     const chartToQueryMap = {
         'newUsersMonthlyChart': 'new_users_monthly',
         'growthRateChart': 'growth_rate_monthly',
+        'loginVelocityChart': 'login_velocity_hourly',
+        'uniqueIdentitiesChart': 'unique_identities_daily',
         'dauChart': 'dau',
         'mauChart': 'mau',
         'mauByCountryChart': 'mau_by_country',
@@ -32,7 +34,10 @@ function addSQLButtonsToCharts() {
         'activePostersChart': 'active_posters',
         'profileCompletionChart': 'profile_completion',
         'profileStatusChart': 'profile_completion', // Same query
-        'profileFreshnessChart': 'profile_freshness'
+        'profileFreshnessChart': 'profile_freshness',
+        'activityByTypeMonthlyChart': 'activity_by_type_monthly',
+        'activityDistributionChart': 'activity_distribution_current',
+        'activityIntensityLevelsChart': 'activity_intensity_levels'
     };
     
     Object.entries(chartToQueryMap).forEach(([chartId, queryId]) => {

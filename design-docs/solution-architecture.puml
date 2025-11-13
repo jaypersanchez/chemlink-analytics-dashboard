@@ -1,0 +1,150 @@
+@startuml Chemlink Service - Solution Architecture
+
+!define RECTANGLE class
+!theme plain
+
+title Chemlink Service - Solution Architecture
+
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam component {
+  BackgroundColor lightyellow
+  BorderColor black
+}
+skinparam database {
+  BackgroundColor lightblue
+  BorderColor black
+}
+skinparam cloud {
+  BackgroundColor lightgreen
+  BorderColor black
+}
+
+' External Systems
+cloud "External Clients" as clients {
+  component [Web App] as webapp
+  component [Mobile App] as mobile
+  component [API Clients] as apiclient
+}
+
+' Load Balancer / Gateway
+rectangle "API Gateway" as gateway {
+  component [Load Balancer] as lb
+  component [Rate Limiting] as ratelimit
+  component [Authentication] as auth
+}
+
+' Core Application
+rectangle "Chemlink Service (Node.js/TypeScript)" as app {
+  component [Express Server] as express
+  component [REST API Endpoints] as api
+  component [Authentication Service] as authservice
+  component [Person Service] as personservice
+  component [Finder Service] as finderservice
+  component [Company Service] as companyservice
+  component [Education Service] as eduservice
+  component [Experience Service] as expservice
+  component [Location Service] as locationservice
+  component [Language Service] as langservice
+  component [Collection Service] as collectionservice
+  component [Lookup Service] as lookupservice
+}
+
+' AI/ML Layer
+rectangle "AI/ML Processing" as aiml {
+  component [LLM Provider] as llmprovider
+  component [Embedding Service] as embeddingservice
+  component [Query Processing] as queryprocessing
+  component [Profile Summarization] as summarization
+  component [Keyword Extraction] as keywordextract
+}
+
+' Data Layer
+rectangle "Data Storage" as storage {
+  database "Neo4j Graph DB" as neo4j {
+    component [Person Nodes] as personnodes
+    component [Company Nodes] as companynodes
+    component [Skills Relationships] as skillsrel
+    component [Experience Relationships] as exprel
+    component [Education Relationships] as edurel
+  }
+  
+  database "PostgreSQL" as postgres {
+    component [User Data] as userdata
+    component [Embeddings] as embeddings
+    component [Query History] as queryhistory
+    component [Vote Data] as votes
+    component [Migrations] as migrations
+  }
+}
+
+' External Services
+cloud "External Services" as external {
+  component [AWS S3] as s3
+  component [AWS Bedrock] as bedrock
+  component [OpenAI] as openai
+  component [Ory Identity] as ory
+  component [Notification Service] as notifservice
+}
+
+' File Processing
+rectangle "Document Processing" as docprocessing {
+  component [PDF Parser] as pdfparser
+  component [CSV Parser] as csvparser
+  component [File Upload] as fileupload
+}
+
+' Relationships
+clients --> gateway : HTTPS Requests
+gateway --> app : Authenticated Requests
+
+app --> aiml : AI Processing
+app --> storage : Data Operations
+app --> external : External API Calls
+app --> docprocessing : Document Processing
+
+aiml --> external : LLM API Calls
+aiml --> storage : Embeddings Storage
+
+finderservice --> neo4j : Cypher Queries
+finderservice --> postgres : SQL Queries
+finderservice --> llmprovider : Keyword Extraction
+finderservice --> llmprovider : Profile Summarization
+
+embeddingservice --> postgres : Store Embeddings
+queryprocessing --> neo4j : Graph Search
+queryprocessing --> postgres : Vector Search
+
+s3 --> app : Profile Pictures
+bedrock --> aiml : Claude LLM
+openai --> aiml : OpenAI Models
+ory --> authservice : Identity Management
+
+note top of neo4j
+  Primary data store for:
+  - Person profiles
+  - Company information
+  - Skills and expertise
+  - Work experience
+  - Education history
+  - Relationships between entities
+end note
+
+note top of postgres
+  Complementary data store for:
+  - User authentication data
+  - Vector embeddings
+  - Query history and analytics
+  - Voting/feedback data
+end note
+
+note top of aiml
+  Core AI capabilities:
+  - Natural language query processing
+  - Profile summarization
+  - Semantic search
+  - Keyword extraction
+  - Candidate matching
+end note
+
+@enduml

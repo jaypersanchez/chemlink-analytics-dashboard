@@ -7,21 +7,29 @@ SQL_QUERIES = {
     "new_users_monthly": {
         "name": "New Users - Monthly Trend",
         "database": "ChemLink DB",
-        "query": """SELECT 
+        "query": """-- Rolling 12-month window (current month + 11 previous months)
+-- Returns available data if less than 12 months exists
+SELECT 
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as new_users
 FROM persons 
 WHERE deleted_at IS NULL
+  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
 GROUP BY month 
 ORDER BY month DESC;"""
     },
     "growth_rate_monthly": {
         "name": "User Growth Rate - Monthly",
         "database": "ChemLink DB",
-        "query": """WITH monthly_users AS (
+        "query": """-- Rolling 12-month window with month-over-month growth rate calculation
+-- Shows percentage change compared to previous month
+-- Returns available data if less than 12 months exists
+WITH monthly_users AS (
     SELECT DATE_TRUNC('month', created_at) as month,
            COUNT(*) as new_users
-    FROM persons WHERE deleted_at IS NULL
+    FROM persons 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     GROUP BY month
 )
 SELECT 
@@ -32,6 +40,32 @@ SELECT
            NULLIF(LAG(new_users) OVER (ORDER BY month), 0)), 2) as growth_rate_pct
 FROM monthly_users 
 ORDER BY month DESC;"""
+    },
+    "login_velocity_hourly": {
+        "name": "Login Velocity (Hourly)",
+        "database": "Kratos Identity DB",
+        "query": """SELECT
+    DATE_TRUNC('hour', authenticated_at) AS hour_bucket,
+    COUNT(*) AS sessions_started
+FROM sessions
+WHERE authenticated_at >= NOW() - INTERVAL '24 hours'
+GROUP BY hour_bucket
+ORDER BY hour_bucket DESC
+LIMIT 24;"""
+    },
+    "unique_identities_daily": {
+        "name": "Unique Authenticated Identities (Daily)",
+        "database": "Kratos Identity DB",
+        "query": """-- Distinct Kratos identities that authenticated each day (rolling 30 days)
+SELECT
+    DATE_TRUNC('day', authenticated_at) AS day_bucket,
+    COUNT(DISTINCT identity_id) AS unique_identities,
+    COUNT(*) AS sessions_started
+FROM sessions
+WHERE authenticated_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY day_bucket
+ORDER BY day_bucket DESC
+LIMIT 30;"""
     },
     "dau": {
         "name": "Daily Active Users (DAU)",
@@ -55,15 +89,21 @@ ORDER BY date DESC;"""
     "mau": {
         "name": "Monthly Active Users (MAU)",
         "database": "Engagement DB",
-        "query": """SELECT 
+        "query": """-- Rolling 12-month window (current month + 11 previous months)
+-- Returns available data if less than 12 months exists
+SELECT 
     DATE_TRUNC('month', activity_date) as month,
     COUNT(DISTINCT person_id) as active_users
 FROM (
     SELECT person_id, created_at as activity_date 
-    FROM posts WHERE deleted_at IS NULL
+    FROM posts 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
     UNION ALL
     SELECT person_id, created_at 
-    FROM comments WHERE deleted_at IS NULL
+    FROM comments 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
 ) monthly_activity
 GROUP BY DATE_TRUNC('month', activity_date)
 ORDER BY month DESC;"""
@@ -71,19 +111,34 @@ ORDER BY month DESC;"""
     "mau_by_country": {
         "name": "MAU by Country",
         "database": "Cross-database (Engagement + ChemLink)",
-        "query": """-- Step 1: Get active users from Engagement DB
-SELECT person_id, DATE_TRUNC('month', activity_date) as month
+        "query": """-- Step 1 (Engagement DB): monthly activity per user
+SELECT 
+    DATE_TRUNC('month', activity_date) AS month,
+    person_id,
+    COUNT(CASE WHEN activity_type = 'post' THEN 1 END) AS posts,
+    COUNT(CASE WHEN activity_type = 'comment' THEN 1 END) AS comments
 FROM (
-    SELECT person_id, created_at as activity_date FROM posts WHERE deleted_at IS NULL
-    UNION ALL
-    SELECT person_id, created_at FROM comments WHERE deleted_at IS NULL
+    SELECT person_id, created_at AS activity_date, 'post' AS activity_type
+    FROM posts
+    WHERE deleted_at IS NULL
+  UNION ALL
+    SELECT person_id, created_at, 'comment'
+    FROM comments
+    WHERE deleted_at IS NULL
 ) activity
+GROUP BY DATE_TRUNC('month', activity_date), person_id;
 
--- Step 2: Join with ChemLink DB for location data
--- Note: Person IDs currently don't match between databases
-JOIN persons p ON activity.person_id::text = p.id::text
+-- Step 2 (ChemLink DB): map those person_ids to countries
+-- Replace <person_id_list> with the IDs returned from step 1
+SELECT 
+    p.id::text AS person_id,
+    COALESCE(l.country, 'Unknown') AS country
+FROM persons p
 LEFT JOIN locations l ON p.location_id = l.id
-GROUP BY month, l.country;"""
+WHERE p.id::text IN (<person_id_list>);
+
+-- Final aggregation happens in the app layer by joining the two result sets
+-- on person_id and grouping by month + country."""
     },
     "post_frequency": {
         "name": "Post Frequency - Daily",
@@ -95,7 +150,7 @@ GROUP BY month, l.country;"""
     ROUND(COUNT(*)::numeric / NULLIF(COUNT(DISTINCT person_id), 0), 2) as avg_posts_per_user
 FROM posts
 WHERE deleted_at IS NULL
-  AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    AND created_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY DATE(created_at)
 ORDER BY post_date DESC;"""
     },
@@ -112,7 +167,7 @@ ORDER BY post_date DESC;"""
 FROM posts p
 LEFT JOIN comments c ON p.id = c.post_id AND c.deleted_at IS NULL
 WHERE p.deleted_at IS NULL
-  AND p.created_at >= NOW() - INTERVAL '30 days'
+    AND p.created_at >= NOW() - INTERVAL '30 days'
 GROUP BY p.type
 ORDER BY engagement_rate_pct DESC;"""
     },
@@ -125,7 +180,9 @@ ORDER BY engagement_rate_pct DESC;"""
     COUNT(DISTINCT p.person_id) as unique_authors,
     AVG(char_length(p.content)) as avg_content_length,
     COUNT(CASE WHEN p.link_url IS NOT NULL THEN 1 END) as posts_with_links,
-    COUNT(CASE WHEN p.media_keys IS NOT NULL THEN 1 END) as posts_with_media
+    COUNT(CASE WHEN p.media_keys IS NOT NULL THEN 1 END) as posts_with_media,
+    MIN(p.created_at) as first_post,
+    MAX(p.created_at) as latest_post
 FROM posts p
 WHERE p.deleted_at IS NULL
 GROUP BY p.type
@@ -139,6 +196,7 @@ ORDER BY post_count DESC;"""
     p.email,
     COUNT(DISTINCT po.id) as post_count,
     COUNT(DISTINCT c.id) as comment_count,
+    COUNT(DISTINCT po.id) + COUNT(DISTINCT c.id) as total_contributions,
     (COUNT(DISTINCT po.id) * 3 + COUNT(DISTINCT c.id) * 2) as engagement_score,
     CASE 
         WHEN COUNT(DISTINCT po.id) >= 20 THEN 'Power User'
@@ -152,7 +210,7 @@ LEFT JOIN comments c ON p.id = c.person_id AND c.deleted_at IS NULL
 WHERE p.deleted_at IS NULL
 GROUP BY p.id, p.first_name, p.last_name, p.email
 HAVING COUNT(DISTINCT po.id) > 0 OR COUNT(DISTINCT c.id) > 0
-ORDER BY engagement_score DESC
+ORDER BY engagement_score DESC, post_count DESC
 LIMIT 20;"""
     },
     "post_reach": {
@@ -167,12 +225,13 @@ LIMIT 20;"""
     COUNT(DISTINCT c.person_id) as unique_commenters,
     p.created_at,
     EXTRACT(days FROM NOW() - p.created_at)::integer as days_old,
+    -- Calculate engagement score: comments are weighted higher
     (COUNT(DISTINCT c.id) * 10 + COUNT(DISTINCT c.person_id) * 5) as engagement_score
 FROM posts p
 JOIN persons author ON p.person_id = author.id
 LEFT JOIN comments c ON p.id = c.post_id AND c.deleted_at IS NULL
 WHERE p.deleted_at IS NULL
-  AND p.created_at >= NOW() - INTERVAL '30 days'
+    AND p.created_at >= NOW() - INTERVAL '30 days'
 GROUP BY p.id, p.content, author.first_name, author.last_name, p.type, p.created_at
 ORDER BY engagement_score DESC, comment_count DESC, p.created_at DESC
 LIMIT 20;"""
@@ -183,23 +242,40 @@ LIMIT 20;"""
         "query": """WITH profile_completeness AS (
     SELECT 
         p.id,
-        (CASE WHEN p.headline_description IS NOT NULL AND LENGTH(p.headline_description) > 10 THEN 1 ELSE 0 END +
-         CASE WHEN p.linked_in_url IS NOT NULL THEN 1 ELSE 0 END +
-         CASE WHEN p.location_id IS NOT NULL THEN 1 ELSE 0 END +
-         CASE WHEN p.company_id IS NOT NULL THEN 1 ELSE 0 END +
-         CASE WHEN (SELECT COUNT(*) FROM experiences WHERE person_id = p.id AND deleted_at IS NULL) > 0 THEN 1 ELSE 0 END +
-         CASE WHEN (SELECT COUNT(*) FROM education WHERE person_id = p.id AND deleted_at IS NULL) > 0 THEN 1 ELSE 0 END +
-         CASE WHEN (SELECT COUNT(*) FROM person_languages WHERE person_id = p.id AND deleted_at IS NULL) > 0 THEN 1 ELSE 0 END
-        ) as profile_completeness_score
+        p.first_name || ' ' || p.last_name as full_name,
+        p.email,
+        CASE WHEN p.headline_description IS NOT NULL AND LENGTH(p.headline_description) > 10 THEN 1 ELSE 0 END as has_headline,
+        CASE WHEN p.linked_in_url IS NOT NULL THEN 1 ELSE 0 END as has_linkedin,
+        CASE WHEN p.location_id IS NOT NULL THEN 1 ELSE 0 END as has_location,
+        CASE WHEN p.company_id IS NOT NULL THEN 1 ELSE 0 END as has_company,
+        (SELECT COUNT(*) FROM experiences WHERE person_id = p.id AND deleted_at IS NULL) as experience_count,
+        (SELECT COUNT(*) FROM education WHERE person_id = p.id AND deleted_at IS NULL) as education_count,
+        (SELECT COUNT(*) FROM person_languages WHERE person_id = p.id AND deleted_at IS NULL) as language_count,
+        (SELECT COUNT(*) FROM embeddings WHERE person_id = p.id AND deleted_at IS NULL) as embedding_count,
+        p.has_finder
     FROM persons p
     WHERE p.deleted_at IS NULL
 )
 SELECT 
-    profile_completeness_score,
-    COUNT(*) as user_count
+    full_name,
+    email,
+    (has_headline + has_linkedin + has_location + has_company + 
+     CASE WHEN experience_count > 0 THEN 1 ELSE 0 END +
+     CASE WHEN education_count > 0 THEN 1 ELSE 0 END +
+     CASE WHEN language_count > 0 THEN 1 ELSE 0 END) as profile_completeness_score,
+    experience_count,
+    education_count,
+    language_count,
+    embedding_count,
+    has_finder,
+    CASE 
+        WHEN embedding_count > 0 THEN 'FINDER_ENABLED'
+        WHEN experience_count > 0 OR education_count > 0 THEN 'BUILDER_ONLY'
+        ELSE 'BASIC_PROFILE'
+    END as profile_status
 FROM profile_completeness
-GROUP BY profile_completeness_score
-ORDER BY profile_completeness_score;"""
+ORDER BY profile_completeness_score DESC, embedding_count DESC
+LIMIT 50;"""
     },
     "profile_freshness": {
         "name": "Profile Update Freshness",
@@ -216,7 +292,8 @@ ORDER BY profile_completeness_score;"""
     END as profile_status
 FROM persons
 WHERE deleted_at IS NULL
-ORDER BY days_since_update DESC;"""
+ORDER BY days_since_update DESC
+LIMIT 50;"""
     },
     "top_companies": {
         "name": "Top Companies",
@@ -224,17 +301,14 @@ ORDER BY days_since_update DESC;"""
         "query": """SELECT 
     c.name as company_name,
     COUNT(DISTINCT p.id) as user_count,
-    COUNT(DISTINCT e.id) as total_experiences,
-    STRING_AGG(DISTINCT l.country, ', ') as countries
+    COUNT(DISTINCT e.id) as total_experiences
 FROM companies c
 LEFT JOIN persons p ON c.id = p.company_id AND p.deleted_at IS NULL
 LEFT JOIN experiences e ON c.id = e.company_id AND e.deleted_at IS NULL
-LEFT JOIN locations l ON c.location_id = l.id
 WHERE c.deleted_at IS NULL
   AND (p.id IS NOT NULL OR e.id IS NOT NULL)
 GROUP BY c.id, c.name
-ORDER BY user_count DESC, total_experiences DESC
-LIMIT 20;"""
+ORDER BY user_count DESC, total_experiences DESC;"""
     },
     "top_roles": {
         "name": "Top Roles/Job Titles",
@@ -243,14 +317,13 @@ LIMIT 20;"""
     r.title as role_title,
     COUNT(DISTINCT e.person_id) as user_count,
     COUNT(DISTINCT e.company_id) as companies_count,
-    AVG(EXTRACT(YEAR FROM COALESCE(e.end_date, CURRENT_DATE)) - EXTRACT(YEAR FROM e.start_date)) as avg_years_in_role
+    COUNT(DISTINCT e.id) as total_experiences
 FROM roles r
 JOIN experiences e ON r.id = e.role_id
 WHERE r.deleted_at IS NULL
   AND e.deleted_at IS NULL
 GROUP BY r.id, r.title
-ORDER BY user_count DESC
-LIMIT 20;"""
+ORDER BY user_count DESC;"""
     },
     "education_distribution": {
         "name": "Education Distribution",
@@ -280,24 +353,339 @@ FROM persons p
 LEFT JOIN locations l ON p.location_id = l.id
 WHERE p.deleted_at IS NULL
 GROUP BY l.country
-ORDER BY user_count DESC
-LIMIT 15;"""
+ORDER BY user_count DESC;"""
     },
     "top_skills_projects": {
         "name": "Top Skills & Project Types",
         "database": "ChemLink DB",
         "query": """SELECT 
     pr.name as project_name,
-    pr.description as project_description,
-    COUNT(DISTINCT pr.person_id) as user_count,
-    MIN(pr.start_date) as first_project,
-    MAX(COALESCE(pr.end_date, CURRENT_DATE)) as last_project
+    LEFT(pr.description, 100) as project_description,
+    COUNT(*) as project_count
 FROM projects pr
 WHERE pr.deleted_at IS NULL
   AND pr.name IS NOT NULL
 GROUP BY pr.name, pr.description
-HAVING COUNT(DISTINCT pr.person_id) > 1
-ORDER BY user_count DESC
-LIMIT 20;"""
+ORDER BY project_count DESC;"""
+    },
+    "account_funnel": {
+        "name": "Account Creation Drop-off Funnel",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    COUNT(*) as total_accounts,
+    COUNT(CASE WHEN first_name IS NOT NULL AND last_name IS NOT NULL THEN 1 END) as step_basic_info,
+    COUNT(CASE WHEN headline_description IS NOT NULL AND LENGTH(headline_description) > 10 THEN 1 END) as step_headline,
+    COUNT(CASE WHEN location_id IS NOT NULL THEN 1 END) as step_location,
+    COUNT(CASE WHEN company_id IS NOT NULL THEN 1 END) as step_company,
+    COUNT(CASE WHEN linked_in_url IS NOT NULL THEN 1 END) as step_linkedin,
+    COUNT(CASE WHEN finder_enabled = true THEN 1 END) as step_finder_enabled
+FROM persons
+WHERE deleted_at IS NULL;"""
+    },
+    "profile_additions": {
+        "name": "Profile Additions to Collections",
+        "database": "ChemLink DB",
+        "query": """SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as profiles_added
+FROM collection_profiles
+WHERE deleted_at IS NULL
+GROUP BY month
+ORDER BY month DESC
+LIMIT 12;"""
+    },
+    "collections_created": {
+        "name": "Collections Created",
+        "database": "ChemLink DB",
+        "query": """-- Total Collections
+SELECT COUNT(*) as total_collections
+FROM collections
+WHERE deleted_at IS NULL;
+
+-- Collections by Privacy Type
+SELECT 
+    COALESCE(privacy, 'Not Set') as privacy_type,
+    COUNT(*) as count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM collections WHERE deleted_at IS NULL), 2) as percentage
+FROM collections
+WHERE deleted_at IS NULL
+GROUP BY privacy
+ORDER BY count DESC;
+
+-- Collections Created Over Time (Monthly)
+SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as collections_created
+FROM collections
+WHERE deleted_at IS NULL
+GROUP BY month
+ORDER BY month DESC
+LIMIT 12;"""
+    },
+    "collections_shared": {
+        "name": "Shared Collections",
+        "database": "ChemLink DB",
+        "query": """-- Total Shared Collections
+SELECT COUNT(DISTINCT collection_id) as shared_collections
+FROM collection_collaborators
+WHERE deleted_at IS NULL;
+
+-- Total Collaboration Invites
+SELECT COUNT(*) as total_shares
+FROM collection_collaborators
+WHERE deleted_at IS NULL;
+
+-- Collections by Access Type
+SELECT 
+    COALESCE(access_type, 'Not Set') as access_type,
+    COUNT(*) as share_count,
+    COUNT(DISTINCT collection_id) as collections_with_access
+FROM collection_collaborators
+WHERE deleted_at IS NULL
+GROUP BY access_type
+ORDER BY share_count DESC;"""
+    },
+    "finder_searches": {
+        "name": "Finder Search Analytics",
+        "database": "ChemLink DB",
+        "query": """-- Total Searches
+SELECT COUNT(*) as total_searches
+FROM query_embeddings
+WHERE deleted_at IS NULL;
+
+-- Searches by Intent
+SELECT 
+    COALESCE(intent, 'Not Specified') as intent,
+    COUNT(*) as search_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 2) as percentage
+FROM query_embeddings
+WHERE deleted_at IS NULL
+GROUP BY intent
+ORDER BY search_count DESC
+LIMIT 10;
+
+-- Searches Over Time (Monthly) - all available data
+SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COUNT(*) as searches
+FROM query_embeddings
+WHERE deleted_at IS NULL
+GROUP BY month
+ORDER BY month DESC;"""
+    },
+    "finder_engagement": {
+        "name": "Finder Engagement Rate",
+        "database": "ChemLink DB",
+        "query": """-- Total Votes on Search Results
+SELECT COUNT(*) as total_votes
+FROM query_votes
+WHERE deleted_at IS NULL;
+
+-- Votes by Type (upvote/downvote)
+SELECT 
+    COALESCE(type, 'Unknown') as vote_type,
+    COUNT(*) as vote_count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL), 2) as percentage
+FROM query_votes
+WHERE deleted_at IS NULL
+GROUP BY type
+ORDER BY vote_count DESC;
+
+-- Active Voters (Users who engaged with search results)
+SELECT COUNT(DISTINCT voter_id) as active_users
+FROM query_votes
+WHERE deleted_at IS NULL;
+
+-- Engagement Rate (% of searches that get votes)
+SELECT 
+    (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL)::float / 
+    NULLIF((SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 0) * 100 as engagement_rate_pct;"""
+    },
+    "dau_comprehensive": {
+        "name": "DAU - Comprehensive (All Activity Types)",
+        "database": "ChemLink DB",
+        "query": """-- Daily Active Users tracking ALL activity types
+-- NOTE: query_votes has NO deleted_at column
+-- NOTE: query_embeddings has NO person tracking (system-level data)
+SELECT 
+    DATE(activity_date) as date,
+    COUNT(DISTINCT person_id) as active_users
+FROM (
+    SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+    UNION ALL
+    SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= CURRENT_DATE - INTERVAL '30 days' AND updated_at != created_at
+) daily_activity
+GROUP BY DATE(activity_date)
+ORDER BY date DESC;"""
+    },
+    "mau_comprehensive": {
+        "name": "MAU - Comprehensive (All Activity Types)",
+        "database": "ChemLink DB",
+        "query": """-- Monthly Active Users tracking ALL activity types
+-- NOTE: query_votes has NO deleted_at column
+-- NOTE: query_embeddings has NO person tracking (system-level data)
+SELECT 
+    DATE_TRUNC('month', activity_date) as month,
+    COUNT(DISTINCT person_id) as active_users
+FROM (
+    SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months' AND updated_at != created_at
+) monthly_activity
+GROUP BY DATE_TRUNC('month', activity_date)
+ORDER BY month DESC;"""
+    },
+    "user_type": {
+        "name": "Active Users by Type (Standard vs Finder)",
+        "database": "ChemLink DB",
+        "query": """-- Active users segmented by Standard vs Finder
+-- NOTE: query_votes has NO deleted_at column, uses voter_id not person_id
+SELECT 
+    DATE_TRUNC('month', activity_date) as month,
+    CASE WHEN has_finder THEN 'Finder Users' ELSE 'Standard Users' END as user_type,
+    COUNT(DISTINCT activity.person_id) as active_users
+FROM (
+    SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+) activity
+JOIN persons p ON activity.person_id = p.id
+WHERE p.deleted_at IS NULL
+GROUP BY month, has_finder
+ORDER BY month DESC, user_type;"""
+    },
+    "collections_privacy": {
+        "name": "Collections Created by Privacy (Public vs Private)",
+        "database": "ChemLink DB",
+        "query": """-- Collections segmented by privacy type over time
+SELECT 
+    DATE_TRUNC('month', created_at) as month,
+    COALESCE(privacy, 'Not Set') as privacy_type,
+    COUNT(*) as collections_created
+FROM collections
+WHERE deleted_at IS NULL
+  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+GROUP BY month, privacy
+ORDER BY month DESC, privacy;"""
+    },
+    "activity_by_type_monthly": {
+        "name": "Monthly Active Users by Activity Type",
+        "database": "Engagement DB",
+        "query": """SELECT 
+    DATE_TRUNC('month', activity_date) as month,
+    activity_type,
+    COUNT(DISTINCT person_id) as unique_users,
+    COUNT(*) as total_activities
+FROM (
+    SELECT person_id, created_at as activity_date, 'post' as activity_type 
+    FROM posts 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    UNION ALL
+    SELECT person_id, created_at, 'comment' 
+    FROM comments 
+    WHERE deleted_at IS NULL
+      AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+) monthly_activity
+GROUP BY DATE_TRUNC('month', activity_date), activity_type
+ORDER BY month DESC, activity_type;"""
+    },
+    "activity_distribution_current": {
+        "name": "Activity Distribution - Current Month",
+        "database": "Engagement DB",
+        "query": """WITH activity_counts AS (
+    SELECT 
+        activity_type,
+        COUNT(DISTINCT person_id) as unique_users
+    FROM (
+        SELECT person_id, 'post' as activity_type 
+        FROM posts 
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+        UNION ALL
+        SELECT person_id, 'comment' 
+        FROM comments 
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+    ) current_month_activity
+    GROUP BY activity_type
+),
+monthly_total AS (
+    SELECT SUM(unique_users) as total_active_users
+    FROM activity_counts
+)
+SELECT 
+    ac.activity_type,
+    ac.unique_users,
+    mt.total_active_users,
+    ROUND((ac.unique_users::numeric / NULLIF(mt.total_active_users, 0)) * 100, 2) as percentage
+FROM activity_counts ac
+CROSS JOIN monthly_total mt
+ORDER BY ac.unique_users DESC;"""
+    },
+    "activity_intensity_levels": {
+        "name": "User Engagement Intensity Levels",
+        "database": "Engagement DB",
+        "query": """WITH user_activity_counts AS (
+    SELECT 
+        DATE_TRUNC('month', activity_date) as month,
+        person_id,
+        COUNT(*) as total_activities,
+        COUNT(CASE WHEN activity_type = 'post' THEN 1 END) as post_count,
+        COUNT(CASE WHEN activity_type = 'comment' THEN 1 END) as comment_count
+    FROM (
+        SELECT person_id, created_at as activity_date, 'post' as activity_type 
+        FROM posts 
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        UNION ALL
+        SELECT person_id, created_at, 'comment' 
+        FROM comments 
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+    ) all_activity
+    GROUP BY month, person_id
+),
+intensity_categorized AS (
+    SELECT 
+        month,
+        person_id,
+        total_activities,
+        post_count,
+        comment_count,
+        CASE 
+            WHEN total_activities >= 20 THEN 'Power User (20+)'
+            WHEN total_activities >= 10 THEN 'Active User (10-19)'
+            WHEN total_activities >= 5 THEN 'Regular User (5-9)'
+            ELSE 'Casual User (1-4)'
+        END as intensity_level
+    FROM user_activity_counts
+)
+SELECT 
+    month,
+    intensity_level,
+    COUNT(DISTINCT person_id) as user_count,
+    ROUND(AVG(total_activities), 2) as avg_activities_per_user,
+    ROUND(AVG(post_count), 2) as avg_posts_per_user,
+    ROUND(AVG(comment_count), 2) as avg_comments_per_user
+FROM intensity_categorized
+GROUP BY month, intensity_level
+ORDER BY month DESC, 
+    CASE intensity_level
+        WHEN 'Power User (20+)' THEN 1
+        WHEN 'Active User (10-19)' THEN 2
+        WHEN 'Regular User (5-9)' THEN 3
+        ELSE 4
+    END;"""
     }
 }
