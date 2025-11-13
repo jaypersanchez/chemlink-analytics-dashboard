@@ -912,5 +912,57 @@
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sql-modal.js') }}"></script>
+    <script>
+        // Tooltip click handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const infoIcons = document.querySelectorAll('.info-icon');
+            
+            infoIcons.forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const container = this.closest('.chart-container');
+                    const tooltip = container.querySelector('.chart-tooltip');
+                    
+                    // Close all other tooltips
+                    document.querySelectorAll('.chart-tooltip.active').forEach(t => {
+                        if (t !== tooltip) {
+                            t.classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle this tooltip
+                    tooltip.classList.toggle('active');
+                    
+                    // Add close button if not exists
+                    if (!tooltip.querySelector('.tooltip-close')) {
+                        const closeBtn = document.createElement('button');
+                        closeBtn.className = 'tooltip-close';
+                        closeBtn.innerHTML = '&times;';
+                        closeBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            tooltip.classList.remove('active');
+                        };
+                        tooltip.insertBefore(closeBtn, tooltip.firstChild);
+                    }
+                });
+            });
+            
+            // Close tooltips when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.chart-tooltip') && !e.target.closest('.info-icon')) {
+                    document.querySelectorAll('.chart-tooltip.active').forEach(tooltip => {
+                        tooltip.classList.remove('active');
+                    });
+                }
+            });
+            
+            // Prevent tooltip clicks from closing
+            document.querySelectorAll('.chart-tooltip').forEach(tooltip => {
+                tooltip.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+        });
+    </script>
 </body>
 </html>

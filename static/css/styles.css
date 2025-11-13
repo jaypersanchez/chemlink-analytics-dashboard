@@ -367,13 +367,39 @@ footer {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    pointer-events: none;
+    pointer-events: auto; /* Allow clicks on tooltip */
 }
 
-.chart-container:hover .chart-tooltip {
+/* Show tooltip when active class is added (via click) */
+.chart-tooltip.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+}
+
+/* Close button for tooltip */
+.tooltip-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f56565;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.tooltip-close:hover {
+    background: #e53e3e;
+    transform: rotate(90deg);
 }
 
 .tooltip-title {
@@ -428,7 +454,7 @@ footer {
         max-width: 90vw;
     }
     
-    .chart-container:hover .chart-tooltip {
+    .chart-tooltip.active {
         transform: translate(-50%, -50%);
     }
 }
