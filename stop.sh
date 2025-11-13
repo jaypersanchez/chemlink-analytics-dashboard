@@ -38,3 +38,25 @@ fi
 rm "$PID_FILE"
 
 echo "✅ Flask app stopped successfully"
+
+# Stop ngrok
+NGROK_PID_FILE="ngrok.pid"
+
+if [ -f "$NGROK_PID_FILE" ]; then
+    NGROK_PID=$(cat "$NGROK_PID_FILE")
+    
+    if ps -p "$NGROK_PID" > /dev/null 2>&1; then
+        echo "Stopping ngrok (PID: $NGROK_PID)..."
+        kill "$NGROK_PID"
+        sleep 1
+        
+        # Force kill if still running
+        if ps -p "$NGROK_PID" > /dev/null 2>&1; then
+            kill -9 "$NGROK_PID"
+        fi
+        
+        echo "✅ ngrok stopped successfully"
+    fi
+    
+    rm "$NGROK_PID_FILE"
+fi

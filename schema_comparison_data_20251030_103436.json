@@ -1,0 +1,1860 @@
+{
+  "snapshots": {
+    "UAT": {
+      "environment": "UAT",
+      "timestamp": "2025-10-30T10:34:25.314438",
+      "tables": {
+        "public.comments": {
+          "schema": "public",
+          "table": "comments",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "post_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "parent_comment_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "content",
+              "type": "text",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 6
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 8
+            }
+          ],
+          "indexes": [
+            {
+              "name": "comments_pkey",
+              "definition": "CREATE UNIQUE INDEX comments_pkey ON public.comments USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_109562_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_109562_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_109562_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_109562_5_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "fk_comment_parent",
+              "type": "FOREIGN KEY",
+              "column": "parent_comment_id",
+              "foreign_table": "comments",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_comment_person",
+              "type": "FOREIGN KEY",
+              "column": "person_id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_comment_post",
+              "type": "FOREIGN KEY",
+              "column": "post_id",
+              "foreign_table": "posts",
+              "foreign_column": "id"
+            },
+            {
+              "name": "comments_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "comments",
+              "foreign_column": "id"
+            }
+          ]
+        },
+        "public.group_members": {
+          "schema": "public",
+          "table": "group_members",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "group_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "role",
+              "type": "character varying",
+              "max_length": 25,
+              "nullable": "NO",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "confirmed_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 6
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 8
+            }
+          ],
+          "indexes": [
+            {
+              "name": "group_members_pkey",
+              "definition": "CREATE UNIQUE INDEX group_members_pkey ON public.group_members USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_108826_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108826_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108826_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108826_4_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "fk_group_members_group",
+              "type": "FOREIGN KEY",
+              "column": "group_id",
+              "foreign_table": "groups",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_group_members_person",
+              "type": "FOREIGN KEY",
+              "column": "person_id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "group_members_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "group_members",
+              "foreign_column": "id"
+            }
+          ]
+        },
+        "public.groups": {
+          "schema": "public",
+          "table": "groups",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "name",
+              "type": "character varying",
+              "max_length": 255,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "description",
+              "type": "text",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "created_by",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 5
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            }
+          ],
+          "indexes": [
+            {
+              "name": "groups_pkey",
+              "definition": "CREATE UNIQUE INDEX groups_pkey ON public.groups USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_108793_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108793_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "fk_created_by",
+              "type": "FOREIGN KEY",
+              "column": "created_by",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "groups_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "groups",
+              "foreign_column": "id"
+            }
+          ]
+        },
+        "public.mentions": {
+          "schema": "public",
+          "table": "mentions",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "post_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "comment_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "mentioned_person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "mentioned_by_person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 6
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            }
+          ],
+          "indexes": [
+            {
+              "name": "mentions_pkey",
+              "definition": "CREATE UNIQUE INDEX mentions_pkey ON public.mentions USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_109586_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_109586_4_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_109586_5_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "chk_mentions_target",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "mentions",
+              "foreign_column": "comment_id"
+            },
+            {
+              "name": "chk_mentions_target",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "mentions",
+              "foreign_column": "post_id"
+            },
+            {
+              "name": "fk_mentions_by_person",
+              "type": "FOREIGN KEY",
+              "column": "mentioned_by_person_id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_mentions_comment",
+              "type": "FOREIGN KEY",
+              "column": "comment_id",
+              "foreign_table": "comments",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_mentions_mentioned_person",
+              "type": "FOREIGN KEY",
+              "column": "mentioned_person_id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_mentions_post",
+              "type": "FOREIGN KEY",
+              "column": "post_id",
+              "foreign_table": "posts",
+              "foreign_column": "id"
+            },
+            {
+              "name": "mentions_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "mentions",
+              "foreign_column": "id"
+            }
+          ]
+        },
+        "public.persons": {
+          "schema": "public",
+          "table": "persons",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "external_id",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "iam_id",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "employment_status",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "first_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "middle_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "last_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "email",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 8
+            },
+            {
+              "name": "mobile_number",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 9
+            },
+            {
+              "name": "mobile_number_country_code",
+              "type": "character varying",
+              "max_length": 5,
+              "nullable": "YES",
+              "default": null,
+              "position": 10
+            },
+            {
+              "name": "profile_picture_key",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 11
+            },
+            {
+              "name": "profile_pic_updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 12
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 13
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 14
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 15
+            },
+            {
+              "name": "company_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 16
+            },
+            {
+              "name": "role_title",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 17
+            }
+          ],
+          "indexes": [
+            {
+              "name": "persons_external_id_key",
+              "definition": "CREATE UNIQUE INDEX persons_external_id_key ON public.persons USING btree (external_id)"
+            },
+            {
+              "name": "persons_iam_id_key",
+              "definition": "CREATE UNIQUE INDEX persons_iam_id_key ON public.persons USING btree (iam_id)"
+            },
+            {
+              "name": "persons_pkey",
+              "definition": "CREATE UNIQUE INDEX persons_pkey ON public.persons USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_108779_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108779_5_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108779_7_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108779_8_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "persons_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "persons_external_id_key",
+              "type": "UNIQUE",
+              "column": "external_id",
+              "foreign_table": "persons",
+              "foreign_column": "external_id"
+            },
+            {
+              "name": "persons_iam_id_key",
+              "type": "UNIQUE",
+              "column": "iam_id",
+              "foreign_table": "persons",
+              "foreign_column": "iam_id"
+            }
+          ]
+        },
+        "public.pgmigrations": {
+          "schema": "public",
+          "table": "pgmigrations",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "nextval('pgmigrations_id_seq'::regclass)",
+              "position": 1
+            },
+            {
+              "name": "name",
+              "type": "character varying",
+              "max_length": 255,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "run_on",
+              "type": "timestamp without time zone",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 3
+            }
+          ],
+          "indexes": [
+            {
+              "name": "pgmigrations_pkey",
+              "definition": "CREATE UNIQUE INDEX pgmigrations_pkey ON public.pgmigrations USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_108762_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108762_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108762_3_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "pgmigrations_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "pgmigrations",
+              "foreign_column": "id"
+            }
+          ]
+        },
+        "public.posts": {
+          "schema": "public",
+          "table": "posts",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "group_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "type",
+              "type": "character varying",
+              "max_length": 25,
+              "nullable": "NO",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "content",
+              "type": "text",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "link_url",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "media_keys",
+              "type": "jsonb",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 8
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 9
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 10
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 11
+            },
+            {
+              "name": "link_has_preview",
+              "type": "boolean",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "false",
+              "position": 12
+            },
+            {
+              "name": "pinned_by",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 13
+            }
+          ],
+          "indexes": [
+            {
+              "name": "posts_pkey",
+              "definition": "CREATE UNIQUE INDEX posts_pkey ON public.posts USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_108807_12_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108807_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108807_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_108807_4_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "fk_pinned_by_person",
+              "type": "FOREIGN KEY",
+              "column": "pinned_by",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_posts_group",
+              "type": "FOREIGN KEY",
+              "column": "group_id",
+              "foreign_table": "groups",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_posts_person",
+              "type": "FOREIGN KEY",
+              "column": "person_id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "posts_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "posts",
+              "foreign_column": "id"
+            }
+          ]
+        },
+        "public.reports": {
+          "schema": "public",
+          "table": "reports",
+          "owner": "engagement-platform-stg",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "reporter_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "reported_post_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "reported_comment_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "reason",
+              "type": "character varying",
+              "max_length": 100,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "description",
+              "type": "text",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "max_length": 50,
+              "nullable": "YES",
+              "default": "'pending'::character varying",
+              "position": 7
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 8
+            },
+            {
+              "name": "reviewed_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 9
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 10
+            }
+          ],
+          "indexes": [
+            {
+              "name": "reports_pkey",
+              "definition": "CREATE UNIQUE INDEX reports_pkey ON public.reports USING btree (id)"
+            }
+          ],
+          "constraints": [
+            {
+              "name": "2200_113272_1_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_113272_2_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "2200_113272_5_not_null",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": null,
+              "foreign_column": null
+            },
+            {
+              "name": "chk_report_target",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "reports",
+              "foreign_column": "reported_comment_id"
+            },
+            {
+              "name": "chk_report_target",
+              "type": "CHECK",
+              "column": null,
+              "foreign_table": "reports",
+              "foreign_column": "reported_post_id"
+            },
+            {
+              "name": "fk_report_comment",
+              "type": "FOREIGN KEY",
+              "column": "reported_comment_id",
+              "foreign_table": "comments",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_report_post",
+              "type": "FOREIGN KEY",
+              "column": "reported_post_id",
+              "foreign_table": "posts",
+              "foreign_column": "id"
+            },
+            {
+              "name": "fk_report_reporter",
+              "type": "FOREIGN KEY",
+              "column": "reporter_id",
+              "foreign_table": "persons",
+              "foreign_column": "id"
+            },
+            {
+              "name": "reports_pkey",
+              "type": "PRIMARY KEY",
+              "column": "id",
+              "foreign_table": "reports",
+              "foreign_column": "id"
+            }
+          ]
+        }
+      }
+    },
+    "PROD": {
+      "environment": "PROD",
+      "timestamp": "2025-10-30T10:34:31.704739",
+      "tables": {
+        "public.comments": {
+          "schema": "public",
+          "table": "comments",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "post_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "parent_comment_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "content",
+              "type": "text",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 6
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 8
+            }
+          ],
+          "indexes": [
+            {
+              "name": "comments_pkey",
+              "definition": "CREATE UNIQUE INDEX comments_pkey ON public.comments USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.group_members": {
+          "schema": "public",
+          "table": "group_members",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "group_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "role",
+              "type": "character varying",
+              "max_length": 25,
+              "nullable": "NO",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "confirmed_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 6
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 8
+            }
+          ],
+          "indexes": [
+            {
+              "name": "group_members_pkey",
+              "definition": "CREATE UNIQUE INDEX group_members_pkey ON public.group_members USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.groups": {
+          "schema": "public",
+          "table": "groups",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "name",
+              "type": "character varying",
+              "max_length": 255,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "description",
+              "type": "text",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "created_by",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 5
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            }
+          ],
+          "indexes": [
+            {
+              "name": "groups_pkey",
+              "definition": "CREATE UNIQUE INDEX groups_pkey ON public.groups USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.mentions": {
+          "schema": "public",
+          "table": "mentions",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "post_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "comment_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "mentioned_person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "mentioned_by_person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 6
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            }
+          ],
+          "indexes": [
+            {
+              "name": "mentions_pkey",
+              "definition": "CREATE UNIQUE INDEX mentions_pkey ON public.mentions USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.persons": {
+          "schema": "public",
+          "table": "persons",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "external_id",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "iam_id",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "employment_status",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "first_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "middle_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "last_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "email",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 8
+            },
+            {
+              "name": "mobile_number",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 9
+            },
+            {
+              "name": "mobile_number_country_code",
+              "type": "character varying",
+              "max_length": 5,
+              "nullable": "YES",
+              "default": null,
+              "position": 10
+            },
+            {
+              "name": "profile_picture_key",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 11
+            },
+            {
+              "name": "profile_pic_updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 12
+            },
+            {
+              "name": "company_name",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 13
+            },
+            {
+              "name": "role_title",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 14
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 15
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 16
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 17
+            }
+          ],
+          "indexes": [
+            {
+              "name": "persons_external_id_key",
+              "definition": "CREATE UNIQUE INDEX persons_external_id_key ON public.persons USING btree (external_id)"
+            },
+            {
+              "name": "persons_iam_id_key",
+              "definition": "CREATE UNIQUE INDEX persons_iam_id_key ON public.persons USING btree (iam_id)"
+            },
+            {
+              "name": "persons_pkey",
+              "definition": "CREATE UNIQUE INDEX persons_pkey ON public.persons USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.pgmigrations": {
+          "schema": "public",
+          "table": "pgmigrations",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "integer",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "nextval('pgmigrations_id_seq'::regclass)",
+              "position": 1
+            },
+            {
+              "name": "name",
+              "type": "character varying",
+              "max_length": 255,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "run_on",
+              "type": "timestamp without time zone",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 3
+            }
+          ],
+          "indexes": [
+            {
+              "name": "pgmigrations_pkey",
+              "definition": "CREATE UNIQUE INDEX pgmigrations_pkey ON public.pgmigrations USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.posts": {
+          "schema": "public",
+          "table": "posts",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "person_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "group_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "type",
+              "type": "character varying",
+              "max_length": 25,
+              "nullable": "NO",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "content",
+              "type": "text",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "link_url",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "media_keys",
+              "type": "jsonb",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 7
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 8
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 9
+            },
+            {
+              "name": "updated_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 10
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 11
+            },
+            {
+              "name": "link_has_preview",
+              "type": "boolean",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "false",
+              "position": 12
+            },
+            {
+              "name": "pinned_by",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 13
+            }
+          ],
+          "indexes": [
+            {
+              "name": "posts_pkey",
+              "definition": "CREATE UNIQUE INDEX posts_pkey ON public.posts USING btree (id)"
+            }
+          ],
+          "constraints": []
+        },
+        "public.reports": {
+          "schema": "public",
+          "table": "reports",
+          "owner": "engagement-platform-prd",
+          "columns": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": "uuid_generate_v4()",
+              "position": 1
+            },
+            {
+              "name": "reporter_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "NO",
+              "default": null,
+              "position": 2
+            },
+            {
+              "name": "reported_post_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 3
+            },
+            {
+              "name": "reported_comment_id",
+              "type": "uuid",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 4
+            },
+            {
+              "name": "reason",
+              "type": "character varying",
+              "max_length": 100,
+              "nullable": "NO",
+              "default": null,
+              "position": 5
+            },
+            {
+              "name": "description",
+              "type": "text",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 6
+            },
+            {
+              "name": "status",
+              "type": "character varying",
+              "max_length": 50,
+              "nullable": "YES",
+              "default": "'pending'::character varying",
+              "position": 7
+            },
+            {
+              "name": "created_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": "now()",
+              "position": 8
+            },
+            {
+              "name": "reviewed_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 9
+            },
+            {
+              "name": "deleted_at",
+              "type": "timestamp with time zone",
+              "max_length": null,
+              "nullable": "YES",
+              "default": null,
+              "position": 10
+            }
+          ],
+          "indexes": [
+            {
+              "name": "reports_pkey",
+              "definition": "CREATE UNIQUE INDEX reports_pkey ON public.reports USING btree (id)"
+            }
+          ],
+          "constraints": []
+        }
+      }
+    }
+  },
+  "comparison": {
+    "summary": {
+      "total_unique_tables": 8,
+      "common_to_all": 0,
+      "missing_in_dev": 8,
+      "missing_in_uat": 0,
+      "missing_in_prod": 0,
+      "tables_with_differences": 0
+    },
+    "tables": {
+      "missing_in_dev": [
+        "public.comments",
+        "public.group_members",
+        "public.groups",
+        "public.mentions",
+        "public.persons",
+        "public.pgmigrations",
+        "public.posts",
+        "public.reports"
+      ],
+      "missing_in_uat": [],
+      "missing_in_prod": [],
+      "common_to_all": [],
+      "differences": []
+    },
+    "column_differences": [],
+    "index_differences": [],
+    "constraint_differences": []
+  }
+}

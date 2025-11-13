@@ -1,0 +1,38 @@
+================================================================================
+DATABASE SCHEMA COMPARISON REPORT
+================================================================================
+Generated: 2025-10-30 10:34:36
+
+EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+Total Unique Tables:        8
+Tables in All Environments: 0
+Tables Missing in DEV:      8
+Tables Missing in UAT:      0
+Tables Missing in PROD:     0
+Tables with Differences:    0
+
+ENVIRONMENT DETAILS
+--------------------------------------------------------------------------------
+UAT: 8 tables
+PROD: 8 tables
+
+TABLES MISSING IN DEV
+--------------------------------------------------------------------------------
+  • public.comments
+  • public.group_members
+  • public.groups
+  • public.mentions
+  • public.persons
+  • public.pgmigrations
+  • public.posts
+  • public.reports
+
+UAT vs PROD SIMILARITY ANALYSIS
+--------------------------------------------------------------------------------
+Schema Similarity: 100.00%
+Tables in both: 8
+Only in UAT: 0
+Only in PROD: 0
+
+================================================================================

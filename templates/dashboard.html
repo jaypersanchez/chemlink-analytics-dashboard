@@ -42,7 +42,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>This chart displays the total number of new users who signed up each month. Each bar represents one month's worth of new registrations.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Higher bars = more new sign-ups that month. Look for upward trends to see if your user acquisition is growing.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Users</strong> (absolute numbers, not percentages or ratios)<br>
+                        <code>Count = Number of users with created_at in that month</code></p>
+                        <p><strong>Example:</strong> A bar at 150 means exactly 150 new users signed up that month.</p>
+                        <p>Higher bars = more new sign-ups. Look for upward trends (month-over-month growth) or sudden spikes/dips (may indicate marketing campaigns or technical issues).</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Without this data, you can't tell if marketing campaigns are effective or how you compare to competitors in growth speed.</p>
                         <h4>💾 Data Source</h4>
@@ -62,7 +65,11 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>This shows the percentage change in new users compared to the previous month. It reveals if your growth is accelerating or slowing down.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Positive % = growth, Negative % = decline. A line trending upward means growth is accelerating!</p>
+                        <p><strong>Y-Axis Unit: PERCENTAGE (%)</strong><br>
+                        <code>Growth Rate % = ((Current Month - Previous Month) ÷ Previous Month) × 100</code></p>
+                        <p><strong>Example:</strong> If last month had 100 users and this month has 150:<br>
+                        Growth Rate = ((150 - 100) ÷ 100) × 100 = <strong>50%</strong></p>
+                        <p>Positive % = growth, Negative % = decline. Values above 0% mean you're adding more users each month. A trending-up line means growth is accelerating!</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Investors and board members need to see if momentum is building or fading. This metric is crucial for fundraising and strategic planning.</p>
                         <h4>💾 Data Source</h4>
@@ -85,7 +92,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>The number of unique users who posted or commented each day over the last 30 days. This measures actual platform engagement, not just sign-ups.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Look for patterns: Are weekdays busier? Are there spikes after feature launches or marketing campaigns?</p>
+                        <p><strong>Y-Axis Unit: COUNT of Unique Users</strong> (absolute count, not percentage)<br>
+                        <code>DAU = COUNT(DISTINCT person_id) who posted OR commented on that day</code></p>
+                        <p><strong>Example:</strong> A point at 50 means exactly 50 unique users posted or commented that day.</p>
+                        <p>Look for patterns: Are weekdays busier than weekends? Are there spikes after feature launches or marketing campaigns? Sudden drops may indicate technical issues or user churn.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Without daily metrics, you can't identify which days/times are most active or detect problems like sudden drop-offs in engagement.</p>
                         <h4>💾 Data Source</h4>
@@ -105,7 +115,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Monthly count of unique users who actually used the platform (posted or commented), not just signed up.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>This is your "stickiness" metric. Higher MAU means more users returning regularly. Compare to total sign-ups to see retention rate.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Unique Users</strong> (absolute count per month)<br>
+                        <code>MAU = COUNT(DISTINCT person_id) who posted OR commented in that month</code></p>
+                        <p><strong>Example:</strong> A bar at 500 means 500 unique users were active that month.</p>
+                        <p>This is your "stickiness" metric. Higher MAU = more users returning regularly. Compare to total sign-ups to calculate retention rate (MAU ÷ Total Users × 100%).</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Sign-ups don't equal success. MAU reveals if users find value and keep coming back, or if they register and abandon the platform.</p>
                         <h4>💾 Data Source</h4>
@@ -143,6 +156,125 @@
                     <canvas id="mauByCountryChart"></canvas>
                 </div>
             </div>
+
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="dau-comprehensive">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>DAU - Comprehensive (All Activity Types)</h3>
+                    <button class="sql-button" onclick="showSQLModal('dau_comprehensive')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Track ALL user activities: profile views, searches, votes, collections, and profile updates</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📊 DAU - Comprehensive</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Daily active users tracking ALL platform activities: profile views, votes, collection creation, and profile updates. More comprehensive than post/comment activity alone.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Each point represents unique users who performed ANY action on the platform that day. Higher = more engagement across all features.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Standard DAU only tracks posts/comments, missing users who view profiles, search, or curate collections. This gives the full engagement picture.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>view_access + query_votes + collections + persons.updated_at</code></p>
+                    </div>
+                    <canvas id="dauComprehensiveChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="mau-comprehensive">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>MAU - Comprehensive (All Activity Types)</h3>
+                    <button class="sql-button" onclick="showSQLModal('mau_comprehensive')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Complete picture of monthly engagement across all platform features</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📈 MAU - Comprehensive</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Monthly active users across ALL features: profile browsing, voting, collections, and profile maintenance. Shows true platform stickiness beyond content creation.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Upward trend = growing engaged user base. Compare to new user signups to calculate activation rate (MAU / Total Users).</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Many users are "lurkers" who view and curate but don't post. This metric captures them and shows platform value beyond content creators.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>All activities from ChemLink DB aggregated monthly</code></p>
+                    </div>
+                    <canvas id="mauComprehensiveChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width hidden-chart" data-tooltip="login-velocity">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Login Velocity (Past 24 Hours)</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't have real-time visibility into authentication spikes or drop-offs to catch outages early</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔐 Login Velocity (Hourly)</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Number of sessions Kratos issued each hour over the last 24 hours. Each point represents successful logins in that hour.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Look for sudden dips (potential outages) or spikes (campaigns, brute-force attempts). Flat lines may mean no one is signing in.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Support and ops teams can't see authentication health without digging into logs. This exposes issues before customers file tickets.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>sessions table from chemonics-kratos-prd (grouped hourly)</code></p>
+                    </div>
+                    <canvas id="loginVelocityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width hidden-chart" data-tooltip="unique-identities">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Authenticated Users (Unique Identities - 30 Days)</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Compare real sign-ins vs in-app DAU to spot drift between identity and engagement systems</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🧍 Unique Authenticated Identities</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Daily count of distinct Kratos identities that successfully signed in. Highlights the true number of people passing authentication each day.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Trend this line against DAU to ensure every authenticated user shows up in product usage. Divergence can signal tracking gaps or sign-in issues.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without visibility into identity-level traffic, outages or mismatched IDs between systems go unnoticed until users complain.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Kratos sessions table (distinct identity_id per day)</code></p>
+                    </div>
+                    <canvas id="uniqueIdentitiesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="user-type">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Active Users by Type (Standard vs Finder)</h3>
+                    <button class="sql-button" onclick="showSQLModal('user_type')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Understand adoption and engagement of Finder (AI-powered) vs Standard users</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🎯 Active Users by Type</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Segmentation of active users by whether they have Finder (AI-powered search) enabled vs Standard users. Shows adoption of premium AI features.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p><strong>Y-Axis Unit: COUNT of Active Users</strong> (absolute count, stacked by user type)<br>
+                        <code>Finder Users = COUNT(users with has_finder=true)<br>
+                        Standard Users = COUNT(users with has_finder=false)</code></p>
+                        <p><strong>Example:</strong> If the bar shows 300 total with 100 blue (Finder) and 200 orange (Standard), that means 100 AI-enabled users and 200 standard users were active that month.</p>
+                        <p>Growing blue (Finder) segment = successful AI feature adoption and conversion. This is your premium feature penetration rate.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Finder is our competitive advantage. Low Finder adoption means users aren't discovering or valuing our AI capabilities. Need to improve onboarding or feature visibility.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Activity joined with persons.has_finder field</code></p>
+                    </div>
+                    <canvas id="activeUsersByTypeChart"></canvas>
+                </div>
+            </div>
         </section>
 
         <!-- User Engagement -->
@@ -165,7 +297,10 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Number of posts created each day and how many unique users posted. Tracks content creation momentum.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Upward trend = growing activity. Flat or declining = engagement problem. Check if marketing campaigns or features cause spikes.</p>
+                        <p><strong>Y-Axis Unit: COUNT of Posts</strong> (absolute number of posts created per day)<br>
+                        <code>Posts Created = COUNT(*) FROM posts WHERE DATE(created_at) = that day</code></p>
+                        <p><strong>Example:</strong> A point at 15 means exactly 15 posts were created that day.</p>
+                        <p>Upward trend = growing activity. Flat or declining = engagement problem. Spikes often correlate with marketing campaigns or new feature launches.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Can't tell if your platform is gaining traction or losing steam. Essential for detecting early warning signs of declining engagement.</p>
                         <h4>💾 Data Source</h4>
@@ -185,11 +320,14 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>How many comments each post type gets on average. Shows which content drives the most discussion.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Higher engagement rate = content resonates with users. Use this to guide content strategy and feature development.</p>
+                        <p><strong>Y-axis shows a ratio (NOT a percentage):</strong><br>
+                        <code>Average Comments per Post = Total Comments ÷ Total Posts</code></p>
+                        <p><strong>Example:</strong> If you have 10 posts with 25 total comments, the value is 2.5 (meaning 2.5 comments per post on average).</p>
+                        <p>Higher values = more engagement. A value of 0.00 means no one is commenting on that content type. Compare content types to see what resonates most with your audience.</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>Without engagement data, you're building features blindly. This shows what actually creates value and community interaction.</p>
                         <h4>💾 Data Source</h4>
-                        <p><code>Comments per post by content type</code></p>
+                        <p><code>Comments per post by content type (last 30 days)</code></p>
                     </div>
                     <canvas id="engagementRateChart"></canvas>
                 </div>
@@ -228,13 +366,301 @@
                         <h4>📊 What This Chart Shows</h4>
                         <p>Your top contributors ranked by engagement score (posts + comments weighted). These are your community champions.</p>
                         <h4>🔍 How to Read It</h4>
-                        <p>Power Users (purple) are critical to platform health. Nurture them with recognition, early features, or partnership opportunities.</p>
+                        <p><strong>Y-Axis Unit: ENGAGEMENT SCORE</strong> (weighted point system)<br>
+                        <code>Engagement Score = (Post Count × 3) + (Comment Count × 2)</code></p>
+                        <p><strong>Example:</strong> A user with 10 posts and 20 comments gets: (10×3) + (20×2) = 30 + 40 = <strong>70 points</strong></p>
+                        <p>Posts are weighted higher (3 points) than comments (2 points) because creating content requires more effort. Higher scores = more valuable contributors. Power Users are critical to platform health - nurture them!</p>
                         <h4>⚠️ Business Pain Point</h4>
                         <p>10% of users drive 90% of content. Identify and retain these power users or risk losing your entire community.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>Engagement score = posts*3 + comments*2</code></p>
                     </div>
                     <canvas id="activePostersChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Activity Type Analytics -->
+        <section class="metrics-section category-activity">
+            <div class="category-header">
+                <h2>📊 Activity Type Analytics</h2>
+                <p class="category-description">Understand what actions users are taking and their engagement intensity</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="activity-by-type-monthly">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Monthly Active Users by Activity Type</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">See which activities users perform - posting vs commenting trends</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📊 MAU by Activity Type</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Monthly breakdown of unique users by activity type (posts vs comments). Stacked bars show composition of engagement.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Stacked bars show how many users posted vs commented each month. Growing comment stack = improving engagement depth.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Understand if users are just broadcasting (posting) or actually engaging (commenting). Comments = stronger community bonds.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>posts + comments from Engagement DB</code></p>
+                    </div>
+                    <canvas id="activityByTypeMonthlyChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="activity-distribution">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Activity Distribution - Current Month</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">What percentage of users post vs comment this month?</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🥧 Activity Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Pie chart showing percentage breakdown of users by activity type for the current month.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Slice sizes show activity mix. 100% posting = one-way broadcast. Balanced = healthy discussions.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Dominated by posting = echo chamber. Need commenting to create network effects and retention.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>Current month posts + comments</code></p>
+                    </div>
+                    <canvas id="activityDistributionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="activity-intensity">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>User Engagement Intensity Levels</h3>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">How many power users vs casual users do we have each month?</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔥 Engagement Intensity</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Users categorized by activity level: Power Users (20+), Active (10-19), Regular (5-9), Casual (1-4) activities per month.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Stacked bars show user distribution across intensity tiers. Growing Power User segment = platform maturity.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Power users drive 80% of platform value. Track growth of this segment to measure engagement quality, not just quantity.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>User activity counts categorized by thresholds</code></p>
+                    </div>
+                    <canvas id="activityIntensityLevelsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Adoption & Funnels -->
+        <section class="metrics-section category-funnel">
+            <div class="category-header">
+                <h2>🔄 Feature Adoption & Funnels</h2>
+                <p class="category-description">Track user onboarding and feature adoption drop-offs</p>
+            </div>
+            
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="account-funnel">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Account Creation Drop-off Funnel (Bar)</h3>
+                    <button class="sql-button" onclick="showSQLModal('account_funnel')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't know where users are dropping off during onboarding - critical for improving activation rates</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔄 Account Creation Funnel</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>User drop-off at each stage of account creation. Shows where users abandon the onboarding process.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Wider bars = more users at that stage. Biggest narrowing = critical drop-off point needing attention.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Can't improve activation rates without knowing where users drop off. Each lost user is lost revenue.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>persons table with profile completion indicators</code></p>
+                    </div>
+                    <canvas id="accountFunnelChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="account-funnel-pyramid">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Account Creation Funnel (Pyramid)</h3>
+                    <button class="sql-button" onclick="showSQLModal('account_funnel')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Visual representation of user drop-off - wider = more users, narrower = fewer users</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔄 Funnel Pyramid View</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Same data as bar chart but in classic funnel/pyramid shape. Width represents user volume at each stage.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Top (widest) = most users. Bottom (narrowest) = fewest users. Each level shows percentage retained.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Classic funnel visualization makes drop-off patterns immediately obvious to stakeholders.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>persons table with profile completion indicators</code></p>
+                    </div>
+                    <canvas id="accountFunnelPyramidChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Finder Search Analytics -->
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="finder-searches">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Finder Search Volume</h3>
+                    <button class="sql-button" onclick="showSQLModal('finder_searches')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Don't know if users are actually using our AI-powered Finder feature</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔍 Finder Search Volume</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Total searches performed using the Finder AI feature over time. Shows feature adoption.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Upward trend = users finding value in AI search. Flat = feature not being discovered.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Finder is a key differentiator. Low usage means we're not converting users to our AI-powered features.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>query_embeddings table</code></p>
+                    </div>
+                    <canvas id="finderSearchesChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="finder-intents">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Search Intent Distribution</h3>
+                    <button class="sql-button" onclick="showSQLModal('finder_searches')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Need to understand what users are searching for to improve AI matching</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🎯 Search Intent Distribution</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Breakdown of search types/intents. Shows what users are looking for.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Top intents = user needs. Use this to prioritize AI model training and feature development.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Without intent data, we can't optimize search quality or understand user needs.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>query_embeddings.intent field</code></p>
+                    </div>
+                    <canvas id="finderIntentsChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="finder-engagement">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Finder Engagement Rate</h3>
+                    <button class="sql-button" onclick="showSQLModal('finder_engagement')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Don't know if our AI search results are actually useful to users</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">💯 Finder Engagement Rate</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Percentage of searches that get votes/feedback. Shows search result quality.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High engagement = users finding relevant results. Low = AI needs improvement.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Poor search results mean users won't adopt Finder, losing our competitive advantage.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>query_votes / query_embeddings ratio</code></p>
+                    </div>
+                    <canvas id="finderEngagementChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Collections Feature Engagement -->
+            <div class="chart-row">
+                <div class="chart-container" data-tooltip="profile-additions">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Profile Additions to Collections</h3>
+                    <button class="sql-button" onclick="showSQLModal('profile_additions')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">We don't know if users are actually utilizing our talent curation features</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📊 Profile Additions to Collections</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Monthly trend of how many profiles are being added to collections. Shows talent curation activity.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Upward trend = users finding value in organizing talent. Flat/declining = feature not sticky.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Collections are a key engagement feature. Low usage means users aren't seeing value in talent organization.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>collection_profiles table</code></p>
+                    </div>
+                    <canvas id="profileAdditionsChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="collections-created">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Collections Created</h3>
+                    <button class="sql-button" onclick="showSQLModal('collections_created')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Need to understand if collections feature is being adopted</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">📁 Collections Created</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Total collections and breakdown by privacy type. Shows feature adoption and usage patterns.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High private = users curating for themselves. High public = users sharing knowledge with community.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Collections feature adoption indicates platform maturity and advanced usage patterns.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>collections table</code></p>
+                    </div>
+                    <canvas id="collectionsCreatedChart"></canvas>
+                </div>
+                <div class="chart-container" data-tooltip="collections-shared">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Shared Collections</h3>
+                    <button class="sql-button" onclick="showSQLModal('collections_shared')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Don't know if users are collaborating and sharing talent insights</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🤝 Shared Collections</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Collections that have been shared with collaborators. Shows collaboration activity.</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>High sharing = team collaboration happening. Low = users working in silos.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Collaboration features drive retention. Teams that work together stay together.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>collection_collaborators table</code></p>
+                    </div>
+                    <canvas id="collectionsSharedChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-container full-width" data-tooltip="collections-privacy">
+                    <div class="info-icon">ℹ️</div>
+                    <h3>Collections Created by Privacy (Public vs Private)</h3>
+                    <button class="sql-button" onclick="showSQLModal('collections_privacy')">💾 SQL</button>
+                    <div class="pain-point">
+                        <span class="pain-icon">💡</span>
+                        <span class="pain-text">Understand whether users create private collections (personal) or public (community sharing)</span>
+                    </div>
+                    <div class="chart-tooltip">
+                        <h3 class="tooltip-title">🔒 Collections by Privacy</h3>
+                        <h4>📊 What This Chart Shows</h4>
+                        <p>Stacked bar chart showing collections created each month, segmented by privacy level: Public (shareable) vs Private (personal curation).</p>
+                        <h4>🔍 How to Read It</h4>
+                        <p>Green = Public collections (community knowledge sharing). Blue = Private collections (personal use). High private = users curating for themselves. High public = building community.</p>
+                        <h4>⚠️ Business Pain Point</h4>
+                        <p>Collection privacy patterns reveal user intent. All private = users see value but aren't sharing. Balanced = healthy community + personal use. Drive public sharing to build network effects.</p>
+                        <h4>💾 Data Source</h4>
+                        <p><code>collections.privacy field (PUBLIC/PRIVATE)</code></p>
+                    </div>
+                    <canvas id="collectionsPrivacyChart"></canvas>
                 </div>
             </div>
         </section>
@@ -252,7 +678,7 @@
                     <h3>Profile Completion Score Distribution</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters</span>
+                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for users</span>
                     </div>
                     <div class="chart-tooltip">
                         <h3 class="tooltip-title">✅ Profile Completion Score Distribution</h3>
@@ -261,7 +687,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>Most users at 7 = great! Many at 0-2 = onboarding problem. Target campaigns to nudge incomplete profiles.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Incomplete profiles break AI matching and make the platform less valuable. Both recruiters and job seekers get frustrated with poor match quality.</p>
+                        <p>Incomplete profiles break AI matching and make the platform less valuable. Users get frustrated with poor match quality.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>Sum of 7 profile completeness indicators</code></p>
                     </div>
@@ -272,7 +698,7 @@
                     <h3>Profile Status Breakdown</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters</span>
+                        <span class="pain-text">Incomplete profiles hurt our AI matching accuracy and reduce platform value for users</span>
                     </div>
                     <div class="chart-tooltip">
                         <h3 class="tooltip-title">📊 Profile Status Breakdown</h3>
@@ -281,7 +707,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>FINDER_ENABLED = premium users with full AI features. Goal is to move users up this ladder through onboarding and engagement.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Users stuck at BASIC_PROFILE don't get value and will churn. This shows how many users need profile improvement campaigns.</p>
+                        <p>Users stuck at BASIC_PROFILE don't get full platform value and may churn. This shows how many users need profile improvement campaigns.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>Categorize by embedding count and experience/education data</code></p>
                     </div>
@@ -295,7 +721,7 @@
                     <h3>Profile Update Freshness</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Stale profiles make our talent database less valuable - we need to encourage users to keep information current</span>
+                        <span class="pain-text">Stale profiles mean bad matches and frustrated users. Your database value decays over time without updates.</span>
                     </div>
                     <div class="chart-tooltip">
                         <h3 class="tooltip-title">🔄 Profile Update Freshness</h3>
@@ -304,7 +730,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>High STALE count = problem. Users change jobs, learn skills, but profiles don't reflect it. Send update reminders to stale profiles.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Stale profiles mean bad matches, frustrated users, and wasted recruiter time. Your database value decays over time without updates.</p>
+                        <p>Stale profiles mean bad matches and frustrated users. Your database value decays over time without updates.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>Days since last profile update: CURRENT_DATE - updated_at</code></p>
                     </div>
@@ -326,7 +752,7 @@
                     <h3>Top Companies</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">We don't know if we're attracting talent from premium companies or if our network is high-quality enough to attract employers</span>
+                        <span class="pain-text">We don't know if we're attracting talent from premium companies or if our network quality is sufficient</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('top_companies')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -336,7 +762,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>Top-tier companies (Google, Amazon, etc.) = premium network. Unknown companies = need better talent acquisition strategy.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Without knowing company distribution, you can't prove network quality to recruiters or identify partnership opportunities.</p>
+                        <p>Without knowing company distribution, you can't prove network quality or identify partnership opportunities.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>companies JOIN persons/experiences</code></p>
                     </div>
@@ -347,7 +773,7 @@
                     <h3>Top Roles/Job Titles</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Without knowing what roles our users have, we can't build features that match their needs or target the right employers</span>
+                        <span class="pain-text">Without knowing what roles our users have, we can't build features that match their needs</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('top_roles')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -371,7 +797,7 @@
                     <h3>Education Distribution</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Can't prove to recruiters that our talent pool is high-quality without showing education credentials and top schools</span>
+                        <span class="pain-text">Understanding education credentials and top schools helps prove our talent pool is high-quality</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('education_distribution')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -381,7 +807,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>High PhD count = research-heavy network. Mostly Bachelor's = early-career focus. Use for recruiting positioning.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Recruiters won't pay for access without proof of credential quality. This shows you have verified, educated talent.</p>
+                        <p>This shows you have verified, educated talent in your network.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>degrees JOIN education</code></p>
                     </div>
@@ -416,7 +842,7 @@
                     <h3>Top Skills & Projects</h3>
                     <div class="pain-point">
                         <span class="pain-icon">💡</span>
-                        <span class="pain-text">Don't know what kind of work our users do or if they're doing cutting-edge projects that would attract premium employers</span>
+                        <span class="pain-text">Don't know what kind of work our users do or if they're doing cutting-edge projects</span>
                     </div>
                     <button class="sql-button" onclick="showSQLModal('top_skills_projects')">💾 SQL</button>
                     <div class="chart-tooltip">
@@ -426,7 +852,7 @@
                         <h4>🔍 How to Read It</h4>
                         <p>Cutting-edge projects (AI, ML, etc.) = premium talent. Generic projects = commodity skills. Use for employer pitch.</p>
                         <h4>⚠️ Business Pain Point</h4>
-                        <p>Can't sell employer access without showing your network does valuable, relevant work in their domain.</p>
+                        <p>Understanding what valuable, relevant work your network does helps inform platform strategy.</p>
                         <h4>💾 Data Source</h4>
                         <p><code>projects table</code></p>
                     </div>
@@ -486,5 +912,57 @@
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sql-modal.js') }}"></script>
+    <script>
+        // Tooltip click handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const infoIcons = document.querySelectorAll('.info-icon');
+            
+            infoIcons.forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const container = this.closest('.chart-container');
+                    const tooltip = container.querySelector('.chart-tooltip');
+                    
+                    // Close all other tooltips
+                    document.querySelectorAll('.chart-tooltip.active').forEach(t => {
+                        if (t !== tooltip) {
+                            t.classList.remove('active');
+                        }
+                    });
+                    
+                    // Toggle this tooltip
+                    tooltip.classList.toggle('active');
+                    
+                    // Add close button if not exists
+                    if (!tooltip.querySelector('.tooltip-close')) {
+                        const closeBtn = document.createElement('button');
+                        closeBtn.className = 'tooltip-close';
+                        closeBtn.innerHTML = '&times;';
+                        closeBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            tooltip.classList.remove('active');
+                        };
+                        tooltip.insertBefore(closeBtn, tooltip.firstChild);
+                    }
+                });
+            });
+            
+            // Close tooltips when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.chart-tooltip') && !e.target.closest('.info-icon')) {
+                    document.querySelectorAll('.chart-tooltip.active').forEach(tooltip => {
+                        tooltip.classList.remove('active');
+                    });
+                }
+            });
+            
+            // Prevent tooltip clicks from closing
+            document.querySelectorAll('.chart-tooltip').forEach(tooltip => {
+                tooltip.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+        });
+    </script>
 </body>
 </html>

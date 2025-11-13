@@ -1,7 +1,15 @@
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
-from db_config import get_engagement_db_connection, get_chemlink_db_connection, execute_query
+from db_config import (
+    get_engagement_db_connection,
+    get_chemlink_env_connection,
+    get_kratos_db_connection,
+    execute_query,
+)
 import json
+import os
+import psycopg2
+import psycopg2.extras
 from datetime import datetime
 from sql_queries import SQL_QUERIES
 
@@ -16,6 +24,35 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 app.json_encoder = DateTimeEncoder
+
+# ============================================================================
+# V2 ANALYTICS DATABASE CONNECTION
+# ============================================================================
+
+def get_analytics_db_connection():
+    """Connect to local analytics database for V2"""
+    return psycopg2.connect(
+        host=os.getenv('ANALYTICS_DB_HOST', 'localhost'),
+        database='chemlink_analytics',
+        user=os.getenv('ANALYTICS_DB_USER', 'postgres'),
+        password=os.getenv('ANALYTICS_DB_PASSWORD', 'postgres'),
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+
+def execute_analytics_query(query):
+    """Execute query on analytics DB and return results"""
+    conn = get_analytics_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            results = cursor.fetchall()
+            for row in results:
+                for key, value in row.items():
+                    if isinstance(value, datetime):
+                        row[key] = value.isoformat()
+            return results
+    finally:
+        conn.close()
 
 # ============================================================================
 # GROWTH METRICS ROUTES
@@ -39,7 +76,7 @@ def new_users_daily():
           AND DATE(created_at) = CURRENT_DATE
         ORDER BY created_at DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -56,23 +93,24 @@ def new_users_weekly():
         ORDER BY week DESC
         LIMIT 12;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
 @app.route('/api/new-users/monthly')
 def new_users_monthly():
-    """Get new user sign-ups by month"""
+    """Get new user sign-ups by month (rolling 12 months)"""
     query = """
         SELECT 
             DATE_TRUNC('month', created_at) as month,
             COUNT(*) as new_users
         FROM persons 
         WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
         GROUP BY month 
         ORDER BY month DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -96,18 +134,20 @@ def growth_rate_weekly():
         ORDER BY week DESC
         LIMIT 12;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
 @app.route('/api/growth-rate/monthly')
 def growth_rate_monthly():
-    """Get monthly growth rate"""
+    """Get monthly growth rate (rolling 12 months)"""
     query = """
         WITH monthly_users AS (
             SELECT DATE_TRUNC('month', created_at) as month,
                    COUNT(*) as new_users
-            FROM persons WHERE deleted_at IS NULL
+            FROM persons 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             GROUP BY month
         )
         SELECT 
@@ -119,7 +159,42 @@ def growth_rate_monthly():
         FROM monthly_users 
         ORDER BY month DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/auth/login-velocity/hourly')
+def login_velocity_hourly():
+    """Get hourly login velocity from Kratos (identity) sessions"""
+    query = """
+        SELECT
+            DATE_TRUNC('hour', authenticated_at) AS hour_bucket,
+            COUNT(*) AS sessions_started
+        FROM sessions
+        WHERE authenticated_at >= NOW() - INTERVAL '24 hours'
+        GROUP BY hour_bucket
+        ORDER BY hour_bucket DESC
+        LIMIT 24;
+    """
+    conn = get_kratos_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/auth/unique-identities/daily')
+def unique_identities_daily():
+    """Get daily unique identities who authenticated via Kratos"""
+    query = """
+        SELECT
+            DATE_TRUNC('day', authenticated_at) AS day_bucket,
+            COUNT(DISTINCT identity_id) AS unique_identities,
+            COUNT(*) AS sessions_started
+        FROM sessions
+        WHERE authenticated_at >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY day_bucket
+        ORDER BY day_bucket DESC
+        LIMIT 30;
+    """
+    conn = get_kratos_db_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -169,23 +244,96 @@ def active_users_weekly():
 
 @app.route('/api/active-users/monthly')
 def active_users_monthly():
-    """Get monthly active users (MAU)"""
+    """Get monthly active users (MAU) - rolling 12 months"""
     query = """
         SELECT 
             DATE_TRUNC('month', activity_date) as month,
             COUNT(DISTINCT person_id) as active_users
         FROM (
             SELECT person_id, created_at as activity_date 
-            FROM posts WHERE deleted_at IS NULL
+            FROM posts 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
             UNION ALL
             SELECT person_id, created_at 
-            FROM comments WHERE deleted_at IS NULL
+            FROM comments 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
         ) monthly_activity
         GROUP BY DATE_TRUNC('month', activity_date)
-        ORDER BY month DESC
-        LIMIT 12;
+        ORDER BY month DESC;
     """
     conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/active-users/daily-comprehensive')
+def active_users_daily_comprehensive():
+    """Get comprehensive daily active users (DAU) - all activity types from ChemLink DB"""
+    query = """
+        SELECT 
+            DATE(activity_date) as date,
+            COUNT(DISTINCT person_id) as active_users
+        FROM (
+            SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            UNION ALL
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            UNION ALL
+            SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            UNION ALL
+            SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= CURRENT_DATE - INTERVAL '30 days' AND updated_at != created_at
+        ) daily_activity
+        GROUP BY DATE(activity_date)
+        ORDER BY date DESC;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/active-users/monthly-comprehensive')
+def active_users_monthly_comprehensive():
+    """Get comprehensive monthly active users (MAU) - all activity types from ChemLink DB"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', activity_date) as month,
+            COUNT(DISTINCT person_id) as active_users
+        FROM (
+            SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT id as person_id, updated_at as activity_date FROM persons WHERE deleted_at IS NULL AND updated_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months' AND updated_at != created_at
+        ) monthly_activity
+        GROUP BY DATE_TRUNC('month', activity_date)
+        ORDER BY month DESC;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/active-users/by-user-type')
+def active_users_by_user_type():
+    """Get active users segmented by Standard vs Finder users"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', activity_date) as month,
+            CASE WHEN has_finder THEN 'Finder Users' ELSE 'Standard Users' END as user_type,
+            COUNT(DISTINCT activity.person_id) as active_users
+        FROM (
+            SELECT person_id, created_at as activity_date FROM view_access WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT voter_id as person_id, created_at as activity_date FROM query_votes WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT person_id, created_at as activity_date FROM collections WHERE deleted_at IS NULL AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        ) activity
+        JOIN persons p ON activity.person_id = p.id
+        WHERE p.deleted_at IS NULL
+        GROUP BY month, has_finder
+        ORDER BY month DESC, user_type;
+    """
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -232,7 +380,7 @@ def active_users_monthly_by_country():
           AND p.deleted_at IS NULL;
     """
     
-    conn_chemlink = get_chemlink_db_connection()
+    conn_chemlink = get_chemlink_env_connection()
     location_data = execute_query(conn_chemlink, location_query, person_ids)
     
     # Step 3: Create a lookup dictionary for person_id -> country
@@ -502,7 +650,7 @@ def profile_completion_rate():
         ORDER BY profile_completeness_score DESC, embedding_count DESC
         LIMIT 50;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -525,7 +673,7 @@ def profile_update_frequency():
         ORDER BY days_since_update DESC
         LIMIT 50;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -540,19 +688,16 @@ def top_companies():
         SELECT 
             c.name as company_name,
             COUNT(DISTINCT p.id) as user_count,
-            COUNT(DISTINCT e.id) as total_experiences,
-            STRING_AGG(DISTINCT l.country, ', ') as countries
+            COUNT(DISTINCT e.id) as total_experiences
         FROM companies c
         LEFT JOIN persons p ON c.id = p.company_id AND p.deleted_at IS NULL
         LEFT JOIN experiences e ON c.id = e.company_id AND e.deleted_at IS NULL
-        LEFT JOIN locations l ON c.location_id = l.id
         WHERE c.deleted_at IS NULL
           AND (p.id IS NOT NULL OR e.id IS NOT NULL)
         GROUP BY c.id, c.name
-        ORDER BY user_count DESC, total_experiences DESC
-        LIMIT 20;
+        ORDER BY user_count DESC, total_experiences DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -564,17 +709,15 @@ def top_roles():
             r.title as role_title,
             COUNT(DISTINCT e.person_id) as user_count,
             COUNT(DISTINCT e.company_id) as companies_count,
-            ROUND(AVG(EXTRACT(YEAR FROM COALESCE(e.end_date, CURRENT_DATE)) - 
-                  EXTRACT(YEAR FROM e.start_date)), 1) as avg_years_in_role
+            COUNT(DISTINCT e.id) as total_experiences
         FROM roles r
         JOIN experiences e ON r.id = e.role_id
         WHERE r.deleted_at IS NULL
           AND e.deleted_at IS NULL
         GROUP BY r.id, r.title
-        ORDER BY user_count DESC
-        LIMIT 20;
+        ORDER BY user_count DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -593,7 +736,7 @@ def education_distribution():
         GROUP BY d.id, d.name
         ORDER BY user_count DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -611,10 +754,9 @@ def geographic_distribution():
         LEFT JOIN locations l ON p.location_id = l.id
         WHERE p.deleted_at IS NULL
         GROUP BY l.country
-        ORDER BY user_count DESC
-        LIMIT 15;
+        ORDER BY user_count DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -625,18 +767,143 @@ def top_skills_projects():
         SELECT 
             pr.name as project_name,
             LEFT(pr.description, 100) as project_description,
-            COUNT(DISTINCT pr.person_id) as user_count,
-            MIN(pr.start_date) as first_project,
-            MAX(COALESCE(pr.end_date, CURRENT_DATE)) as last_project
+            COUNT(*) as project_count
         FROM projects pr
         WHERE pr.deleted_at IS NULL
           AND pr.name IS NOT NULL
         GROUP BY pr.name, pr.description
-        HAVING COUNT(DISTINCT pr.person_id) > 1
-        ORDER BY user_count DESC
-        LIMIT 20;
+        ORDER BY project_count DESC;
     """
-    conn = get_chemlink_db_connection()
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+# ============================================================================
+# ACTIVITY TYPE ANALYTICS
+# ============================================================================
+
+@app.route('/api/activity/by-type-monthly')
+def activity_by_type_monthly():
+    """Get monthly active users segmented by activity type (Engagement DB)"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', activity_date) as month,
+            activity_type,
+            COUNT(DISTINCT person_id) as unique_users,
+            COUNT(*) as total_activities
+        FROM (
+            SELECT person_id, created_at as activity_date, 'post' as activity_type 
+            FROM posts 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            UNION ALL
+            SELECT person_id, created_at, 'comment' 
+            FROM comments 
+            WHERE deleted_at IS NULL
+              AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        ) monthly_activity
+        GROUP BY DATE_TRUNC('month', activity_date), activity_type
+        ORDER BY month DESC, activity_type;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/activity/distribution-current')
+def activity_distribution_current():
+    """Get activity distribution percentages for current month (Engagement DB)"""
+    query = """
+        WITH activity_counts AS (
+            SELECT 
+                activity_type,
+                COUNT(DISTINCT person_id) as unique_users
+            FROM (
+                SELECT person_id, 'post' as activity_type 
+                FROM posts 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+                UNION ALL
+                SELECT person_id, 'comment' 
+                FROM comments 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
+            ) current_month_activity
+            GROUP BY activity_type
+        ),
+        monthly_total AS (
+            SELECT SUM(unique_users) as total_active_users
+            FROM activity_counts
+        )
+        SELECT 
+            ac.activity_type,
+            ac.unique_users,
+            mt.total_active_users,
+            ROUND((ac.unique_users::numeric / NULLIF(mt.total_active_users, 0)) * 100, 2) as percentage
+        FROM activity_counts ac
+        CROSS JOIN monthly_total mt
+        ORDER BY ac.unique_users DESC;
+    """
+    conn = get_engagement_db_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/activity/intensity-levels')
+def activity_intensity_levels():
+    """Get user engagement intensity levels over time (Engagement DB)"""
+    query = """
+        WITH user_activity_counts AS (
+            SELECT 
+                DATE_TRUNC('month', activity_date) as month,
+                person_id,
+                COUNT(*) as total_activities,
+                COUNT(CASE WHEN activity_type = 'post' THEN 1 END) as post_count,
+                COUNT(CASE WHEN activity_type = 'comment' THEN 1 END) as comment_count
+            FROM (
+                SELECT person_id, created_at as activity_date, 'post' as activity_type 
+                FROM posts 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+                UNION ALL
+                SELECT person_id, created_at, 'comment' 
+                FROM comments 
+                WHERE deleted_at IS NULL
+                  AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+            ) all_activity
+            GROUP BY month, person_id
+        ),
+        intensity_categorized AS (
+            SELECT 
+                month,
+                person_id,
+                total_activities,
+                post_count,
+                comment_count,
+                CASE 
+                    WHEN total_activities >= 20 THEN 'Power User (20+)'
+                    WHEN total_activities >= 10 THEN 'Active User (10-19)'
+                    WHEN total_activities >= 5 THEN 'Regular User (5-9)'
+                    ELSE 'Casual User (1-4)'
+                END as intensity_level
+            FROM user_activity_counts
+        )
+        SELECT 
+            month,
+            intensity_level,
+            COUNT(DISTINCT person_id) as user_count,
+            ROUND(AVG(total_activities), 2) as avg_activities_per_user,
+            ROUND(AVG(post_count), 2) as avg_posts_per_user,
+            ROUND(AVG(comment_count), 2) as avg_comments_per_user
+        FROM intensity_categorized
+        GROUP BY month, intensity_level
+        ORDER BY month DESC, 
+            CASE intensity_level
+                WHEN 'Power User (20+)' THEN 1
+                WHEN 'Active User (10-19)' THEN 2
+                WHEN 'Regular User (5-9)' THEN 3
+                ELSE 4
+            END;
+    """
+    conn = get_engagement_db_connection()
     results = execute_query(conn, query)
     return jsonify(results)
 
@@ -743,13 +1010,13 @@ def metrics_metadata():
                     {
                         "id": "profile_completion",
                         "name": "Profile Completion Score",
-                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters",
+                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for users",
                         "endpoint": "/api/profile/completion-rate"
                     },
                     {
                         "id": "profile_status",
                         "name": "Profile Status Breakdown",
-                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for both job seekers and recruiters",
+                        "pain_point": "Incomplete profiles hurt our AI matching accuracy and reduce platform value for users",
                         "endpoint": "/api/profile/completion-rate"
                     },
                     {
@@ -768,19 +1035,19 @@ def metrics_metadata():
                     {
                         "id": "top_companies",
                         "name": "Top Companies",
-                        "pain_point": "We don't know if we're attracting talent from premium companies or if our network is high-quality enough to attract employers",
+                        "pain_point": "We don't know if we're attracting talent from premium companies or if our network quality is sufficient",
                         "endpoint": "/api/talent/top-companies"
                     },
                     {
                         "id": "top_roles",
                         "name": "Top Roles/Job Titles",
-                        "pain_point": "Without knowing what roles our users have, we can't build features that match their needs or target the right employers",
+                        "pain_point": "Without knowing what roles our users have, we can't build features that match their needs",
                         "endpoint": "/api/talent/top-roles"
                     },
                     {
                         "id": "education_distribution",
                         "name": "Education Distribution",
-                        "pain_point": "Can't prove to recruiters that our talent pool is high-quality without showing education credentials and top schools",
+                        "pain_point": "Understanding education credentials and top schools helps prove our talent pool is high-quality",
                         "endpoint": "/api/talent/education-distribution"
                     },
                     {
@@ -792,7 +1059,7 @@ def metrics_metadata():
                     {
                         "id": "top_skills_projects",
                         "name": "Top Skills & Projects",
-                        "pain_point": "Don't know what kind of work our users do or if they're doing cutting-edge projects that would attract premium employers",
+                        "pain_point": "Don't know what kind of work our users do or if they're doing cutting-edge projects",
                         "endpoint": "/api/talent/top-skills-projects"
                     }
                 ]
@@ -800,6 +1067,244 @@ def metrics_metadata():
         ]
     }
     return jsonify(metadata)
+
+# ============================================================================
+# FEATURE ENGAGEMENT & FUNNEL ANALYTICS
+# ============================================================================
+
+@app.route('/api/funnel/account-creation')
+def account_creation_funnel():
+    """Get account creation drop-off funnel"""
+    query = """
+        SELECT 
+            COUNT(*) as total_accounts,
+            COUNT(*) FILTER (WHERE first_name IS NOT NULL AND last_name IS NOT NULL) as step_basic_info,
+            COUNT(*) FILTER (WHERE headline_description IS NOT NULL) as step_headline,
+            COUNT(*) FILTER (WHERE location_id IS NOT NULL) as step_location,
+            COUNT(*) FILTER (WHERE company_id IS NOT NULL) as step_company,
+            COUNT(*) FILTER (WHERE linked_in_url IS NOT NULL) as step_linkedin,
+            COUNT(*) FILTER (WHERE has_finder = true) as step_finder_enabled
+        FROM persons
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('year', CURRENT_DATE);
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+# ============================================================================
+# FINDER SEARCH ANALYTICS
+# ============================================================================
+
+@app.route('/api/finder/searches')
+def finder_searches():
+    """Get Finder search metrics"""
+    # Total searches
+    total_query = """
+        SELECT COUNT(*) as total_searches
+        FROM query_embeddings
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Searches by intent
+    intent_query = """
+        SELECT 
+            COALESCE(intent, 'Not Specified') as intent,
+            COUNT(*) as search_count
+        FROM query_embeddings
+        WHERE deleted_at IS NULL
+        GROUP BY intent
+        ORDER BY search_count DESC
+        LIMIT 10;
+    """
+    
+    # Searches over time (monthly) - all available data
+    timeline_query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as searches
+        FROM query_embeddings
+        WHERE deleted_at IS NULL
+        GROUP BY month
+        ORDER BY month DESC;
+    """
+    
+    total = execute_query(get_chemlink_env_connection(), total_query)
+    by_intent = execute_query(get_chemlink_env_connection(), intent_query)
+    timeline = execute_query(get_chemlink_env_connection(), timeline_query)
+    
+    return jsonify({
+        "total_searches": total[0]['total_searches'] if total else 0,
+        "searches_by_intent": by_intent,
+        "search_timeline": timeline
+    })
+
+@app.route('/api/finder/engagement')
+def finder_engagement():
+    """Get Finder engagement metrics (votes on search results)"""
+    # Total votes
+    total_query = """
+        SELECT COUNT(*) as total_votes
+        FROM query_votes
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Votes by type
+    type_query = """
+        SELECT 
+            COALESCE(type, 'Unknown') as vote_type,
+            COUNT(*) as vote_count
+        FROM query_votes
+        WHERE deleted_at IS NULL
+        GROUP BY type
+        ORDER BY vote_count DESC;
+    """
+    
+    # Active voters
+    voters_query = """
+        SELECT COUNT(DISTINCT voter_id) as active_users
+        FROM query_votes
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Engagement rate (votes per search)
+    engagement_query = """
+        SELECT 
+            (SELECT COUNT(*) FROM query_votes WHERE deleted_at IS NULL)::float / 
+            NULLIF((SELECT COUNT(*) FROM query_embeddings WHERE deleted_at IS NULL), 0) * 100 as engagement_rate_pct;
+    """
+    
+    total_votes = execute_query(get_chemlink_env_connection(), total_query)
+    by_type = execute_query(get_chemlink_env_connection(), type_query)
+    voters = execute_query(get_chemlink_env_connection(), voters_query)
+    engagement = execute_query(get_chemlink_env_connection(), engagement_query)
+    
+    return jsonify({
+        "total_votes": total_votes[0]['total_votes'] if total_votes else 0,
+        "votes_by_type": by_type,
+        "active_users": voters[0]['active_users'] if voters else 0,
+        "engagement_rate_pct": round(engagement[0]['engagement_rate_pct'], 2) if engagement and engagement[0]['engagement_rate_pct'] else 0
+    })
+
+# ============================================================================
+# COLLECTIONS FEATURE ENGAGEMENT
+# ============================================================================
+
+@app.route('/api/collections/profile-additions')
+def collections_profile_additions():
+    """Get profile additions to collections over time"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as profiles_added
+        FROM collection_profiles
+        WHERE deleted_at IS NULL
+        GROUP BY month
+        ORDER BY month DESC
+        LIMIT 12;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/collections/created')
+def collections_created():
+    """Get collections created over time and by privacy type"""
+    # Get monthly creation trend
+    monthly_query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COUNT(*) as collections_created
+        FROM collections
+        WHERE deleted_at IS NULL
+        GROUP BY month
+        ORDER BY month DESC
+        LIMIT 12;
+    """
+    
+    # Get privacy breakdown
+    privacy_query = """
+        SELECT 
+            COALESCE(privacy, 'Not Set') as privacy_type,
+            COUNT(*) as count
+        FROM collections
+        WHERE deleted_at IS NULL
+        GROUP BY privacy
+        ORDER BY count DESC;
+    """
+    
+    # Get total count
+    total_query = """
+        SELECT COUNT(*) as total_collections
+        FROM collections
+        WHERE deleted_at IS NULL;
+    """
+    
+    monthly = execute_query(get_chemlink_env_connection(), monthly_query)
+    privacy = execute_query(get_chemlink_env_connection(), privacy_query)
+    total = execute_query(get_chemlink_env_connection(), total_query)
+    
+    return jsonify({
+        "monthly_trend": monthly,
+        "privacy_breakdown": privacy,
+        "total_count": total[0]['total_collections'] if total else 0
+    })
+
+@app.route('/api/collections/created-by-privacy')
+def collections_created_by_privacy():
+    """Get collections created over time segmented by privacy (Public vs Private)"""
+    query = """
+        SELECT 
+            DATE_TRUNC('month', created_at) as month,
+            COALESCE(privacy, 'Not Set') as privacy_type,
+            COUNT(*) as collections_created
+        FROM collections
+        WHERE deleted_at IS NULL
+          AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+        GROUP BY month, privacy
+        ORDER BY month DESC, privacy;
+    """
+    conn = get_chemlink_env_connection()
+    results = execute_query(conn, query)
+    return jsonify(results)
+
+@app.route('/api/collections/shared')
+def collections_shared():
+    """Get shared collections metrics"""
+    # Get total shared collections
+    shared_query = """
+        SELECT COUNT(DISTINCT collection_id) as shared_collections
+        FROM collection_collaborators
+        WHERE deleted_at IS NULL;
+    """
+    
+    # Get sharing by access type
+    access_query = """
+        SELECT 
+            COALESCE(access_type, 'Not Set') as access_type,
+            COUNT(*) as share_count
+        FROM collection_collaborators
+        WHERE deleted_at IS NULL
+        GROUP BY access_type
+        ORDER BY share_count DESC;
+    """
+    
+    # Get total collaboration invites
+    total_query = """
+        SELECT COUNT(*) as total_shares
+        FROM collection_collaborators
+        WHERE deleted_at IS NULL;
+    """
+    
+    shared = execute_query(get_chemlink_env_connection(), shared_query)
+    access_types = execute_query(get_chemlink_env_connection(), access_query)
+    total = execute_query(get_chemlink_env_connection(), total_query)
+    
+    return jsonify({
+        "shared_collections_count": shared[0]['shared_collections'] if shared else 0,
+        "access_type_breakdown": access_types,
+        "total_shares": total[0]['total_shares'] if total else 0
+    })
 
 # ============================================================================
 # MAIN DASHBOARD ROUTE
@@ -810,5 +1315,297 @@ def index():
     """Main dashboard page"""
     return render_template('dashboard.html')
 
+# ============================================================================
+# V2 DASHBOARD - AGGREGATED METRICS
+# ============================================================================
+
+@app.route('/v2')
+def dashboard_v2():
+    """V2 Dashboard using aggregated metrics"""
+    return render_template('v2/index.html')
+
+@app.route('/v2/api/new-users/daily')
+def v2_new_users_daily():
+    query = """
+        SELECT metric_date as date, new_signups, new_finder_signups, 
+               new_standard_signups, total_users_cumulative
+        FROM aggregates.daily_metrics
+        WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY metric_date DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/new-users/monthly')
+def v2_new_users_monthly():
+    query = """
+        SELECT metric_month as month, new_signups, 
+               total_users_end_of_month, growth_rate_pct
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/growth-rate/monthly')
+def v2_growth_rate_monthly():
+    query = """
+        SELECT metric_month as month, new_signups, growth_rate_pct
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/active-users/daily')
+def v2_active_users_daily():
+    query = """
+        SELECT metric_date as date, dau, active_posters, active_commenters,
+               active_voters, active_collectors, engagement_rate
+        FROM aggregates.daily_metrics
+        WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY metric_date DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/active-users/monthly')
+def v2_active_users_monthly():
+    query = """
+        SELECT metric_month as month, mau, avg_dau, finder_mau,
+               standard_mau, activation_rate
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/engagement/daily')
+def v2_engagement_daily():
+    query = """
+        SELECT metric_date as date, posts_created, comments_created,
+               votes_cast, collections_created, views_given,
+               engagement_rate, social_engagement_rate
+        FROM aggregates.daily_metrics
+        WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY metric_date DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/engagement/monthly')
+def v2_engagement_monthly():
+    query = """
+        SELECT metric_month as month, total_posts, total_comments,
+               total_votes, total_collections, avg_activities_per_user,
+               avg_engagement_score, activation_rate
+        FROM aggregates.monthly_metrics
+        ORDER BY metric_month DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/users/segmentation')
+def v2_user_segmentation():
+    query = """
+        SELECT engagement_level, COUNT(*) as user_count,
+               ROUND(AVG(engagement_score), 2) as avg_score,
+               ROUND(AVG(total_activities), 2) as avg_activities
+        FROM aggregates.user_engagement_levels
+        GROUP BY engagement_level
+        ORDER BY CASE engagement_level
+            WHEN 'POWER_USER' THEN 1
+            WHEN 'ACTIVE' THEN 2
+            WHEN 'CASUAL' THEN 3
+            WHEN 'LURKER' THEN 4
+            ELSE 5 END;
+    """
+    return jsonify(execute_analytics_query(query))
+
+# ============================================================================
+# NEO4J GRAPH ANALYTICS ROUTES
+# ============================================================================
+
+@app.route('/v2/api/graph/connection-recommendations')
+def graph_connection_recommendations():
+    """Get connection recommendations (People You Should Know)"""
+    query = """
+        SELECT 
+            user_id,
+            recommended_user_id,
+            recommendation_score,
+            common_companies,
+            common_roles,
+            common_schools,
+            recommendation_reason
+        FROM aggregates.connection_recommendations
+        ORDER BY recommendation_score DESC
+        LIMIT 500;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/connection-recommendations/<int:user_id>')
+def graph_connection_recommendations_for_user(user_id):
+    """Get connection recommendations for specific user"""
+    query = f"""
+        SELECT 
+            user_id,
+            recommended_user_id,
+            recommendation_score,
+            common_companies,
+            common_roles,
+            common_schools,
+            recommendation_reason
+        FROM aggregates.connection_recommendations
+        WHERE user_id = {user_id}
+        ORDER BY recommendation_score DESC
+        LIMIT 50;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/company-network')
+def graph_company_network():
+    """Get company network map showing connections between companies"""
+    query = """
+        SELECT 
+            company_id_1,
+            company_id_2,
+            company_name_1,
+            company_name_2,
+            shared_employee_count,
+            employee_ids,
+            network_strength_score
+        FROM aggregates.company_network_map
+        ORDER BY shared_employee_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/company-network/<company_name>')
+def graph_company_network_for_company(company_name):
+    """Get company network connections for specific company"""
+    query = f"""
+        SELECT 
+            company_id_1,
+            company_id_2,
+            company_name_1,
+            company_name_2,
+            shared_employee_count,
+            network_strength_score
+        FROM aggregates.company_network_map
+        WHERE company_name_1 ILIKE '%{company_name}%' 
+           OR company_name_2 ILIKE '%{company_name}%'
+        ORDER BY shared_employee_count DESC
+        LIMIT 100;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/skills-matching')
+def graph_skills_matching():
+    """Get skills matching scores for all users and roles"""
+    query = """
+        SELECT 
+            user_id,
+            role_id,
+            role_title,
+            experience_years,
+            proficiency_score,
+            similar_user_count
+        FROM aggregates.skills_matching_scores
+        ORDER BY proficiency_score DESC
+        LIMIT 500;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/skills-matching/<int:user_id>')
+def graph_skills_matching_for_user(user_id):
+    """Get skills matching scores for specific user"""
+    query = f"""
+        SELECT 
+            user_id,
+            role_id,
+            role_title,
+            experience_years,
+            proficiency_score,
+            similar_user_count
+        FROM aggregates.skills_matching_scores
+        WHERE user_id = {user_id}
+        ORDER BY proficiency_score DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/career-paths')
+def graph_career_paths():
+    """Get career path patterns showing common progressions"""
+    query = """
+        SELECT 
+            path_vector,
+            role_sequence,
+            user_count,
+            user_ids,
+            avg_years_per_role
+        FROM aggregates.career_path_patterns
+        ORDER BY user_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/location-networks')
+def graph_location_networks():
+    """Get location-based professional networks"""
+    query = """
+        SELECT 
+            location_id,
+            country,
+            user_count,
+            company_diversity_score,
+            role_diversity_score,
+            top_companies,
+            top_roles
+        FROM aggregates.location_based_networks
+        ORDER BY user_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/alumni-networks')
+def graph_alumni_networks():
+    """Get alumni networks by school and degree"""
+    query = """
+        SELECT 
+            school_id,
+            school_name,
+            degree_id,
+            degree_name,
+            alumni_count,
+            graduation_year_min,
+            graduation_year_max,
+            current_companies,
+            current_roles
+        FROM aggregates.alumni_networks
+        WHERE alumni_count > 0
+        ORDER BY alumni_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
+@app.route('/v2/api/graph/project-collaborations')
+def graph_project_collaborations():
+    """Get project collaboration networks"""
+    query = """
+        SELECT 
+            project_id,
+            project_name,
+            company_id,
+            company_name,
+            user_count,
+            role_ids,
+            collaboration_strength
+        FROM aggregates.project_collaboration_graph
+        WHERE user_count > 0
+        ORDER BY user_count DESC;
+    """
+    return jsonify(execute_analytics_query(query))
+
 if __name__ == '__main__':
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    env = os.getenv('APP_ENV', 'uat').upper()
+    print(f"\n{'='*60}")
+    print(f"🚀 ChemLink Analytics Dashboard")
+    print(f"📊 Environment: {env}")
+    print(f"🌐 URL: http://127.0.0.1:5000")
+    print(f"{'='*60}\n")
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

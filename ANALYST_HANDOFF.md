@@ -28,8 +28,8 @@ Location: `sql_queries.py`
 ## Current Metrics Coverage
 
 ### Growth Metrics (5)
-1. **New Users - Monthly Trend** - Marketing effectiveness
-2. **User Growth Rate** - MoM growth percentage
+1. **New Users - Monthly Trend** - Marketing effectiveness (rolling 12 months)
+2. **User Growth Rate** - MoM growth percentage (rolling 12 months)
 3. **Daily Active Users (DAU)** - Daily engagement patterns
 4. **Monthly Active Users (MAU)** - Platform stickiness
 5. **MAU by Country** - Geographic distribution (⚠️ has known limitation)
@@ -38,8 +38,8 @@ Location: `sql_queries.py`
 6. **Post Frequency** - Content creation momentum
 7. **Post Engagement Rate** - Which content types drive discussion
 8. **Content Type Distribution** - User content preferences
-9. **Top Active Posters** - Community power users
-10. **Top Performing Posts** - Viral content identification
+9. **Top Active Posters** - Community power users (⚠️ HIDDEN - contains PII)
+10. **Top Performing Posts** - Viral content identification (⚠️ HIDDEN - contains PII)
 
 ### Profile Metrics (3)
 11. **Profile Completion Score** - Data quality indicator
@@ -88,7 +88,20 @@ Location: `sql_queries.py`
 **Issue**: Many engagement rates show 0%  
 **Root Cause**: UAT/staging environment has limited test data  
 **Impact**: Charts render but show zeros  
-**Solution**: Will show real data in production  
+**Solution**: Will show real data in production
+
+### 3. PII Elements Hidden
+**Status**: Intentionally hidden via CSS  
+**Elements**: Top Active Posters chart, Top Performing Posts table  
+**Reason**: Client demo should not show user names/emails  
+**Unhide**: Remove CSS rules in `static/css/styles.css` (search "HIDDEN ELEMENTS")  
+**Note**: Backend logic remains intact - only display is hidden
+
+### 4. Single Month Data
+**Issue**: Charts show only October 2025  
+**Root Cause**: All users have `created_at` in October 2025  
+**Impact**: Growth rate shows null, trends appear flat  
+**Solution**: Will improve as real data accumulates month-over-month
 
 ## What Needs to Happen Next
 
@@ -118,15 +131,42 @@ git clone git@github.com:jaypersanchez/chemlink-analytics-dashboard.git
 cd chemlink-analytics-dashboard
 pip3 install -r requirements.txt
 # Add .env with DB credentials
-./start.sh
+./start.sh [prod|uat|dev]  # Defaults to prod
 ```
+
+### Environment Switching
+**Three environments available:**
+- `./start.sh prod` - Production data (READ-ONLY)
+- `./start.sh uat` - UAT/Staging data (default for testing)
+- `./start.sh dev` - Development data
+
+**Features:**
+- Automatically switches database connections based on environment
+- Uses `caffeinate` to prevent Mac from sleeping during operation
+- Starts ngrok tunnel for public URL access
+- Both Flask app and ngrok stopped with `./stop.sh`
 
 ### Database Credentials
 Stored in `.env` (not in repo for security)
 ```
+# Environment selector
+APP_ENV=prod  # or uat, dev
+
+# UAT/Staging
 CHEMLINK_DB_HOST=...
 CHEMLINK_DB_USER=...
+
+# Production (READ-ONLY)
+CHEMLINK_PRD_DB_HOST=...
+CHEMLINK_PRD_DB_USER=...
+
+# Development
+CHEMLINK_DEV_DB_HOST=...
+CHEMLINK_DEV_DB_USER=...
+
+# Engagement Platform
 ENGAGEMENT_DB_HOST=...
+ENGAGEMENT_DB_USER=...
 ```
 
 ### Project Structure
@@ -172,9 +212,53 @@ static/css/         # Styling
 4. **Extensible**: Adding new metrics follows clear pattern
 5. **Transparent**: No black box - all queries visible
 
+## Recent Changes
+
+### October 29, 2025 - Environment Management & Public Access
+
+#### Environment Switching
+- **Enhanced start.sh**: Now accepts environment parameter (prod/uat/dev)
+- **Dynamic environment loading**: Database connections switch based on APP_ENV
+- **Fixed connection bug**: Routes now use `get_chemlink_env_connection()` instead of hardcoded UAT
+- **Default to prod**: Production is now the default environment
+
+#### Public URL Access
+- **ngrok integration**: Automatically starts tunnel on `./start.sh`
+- **Auto-discovery**: Public URL displayed in terminal on startup
+- **Dashboard access**: http://localhost:4040 for ngrok management
+- **Unified shutdown**: `./stop.sh` now stops both Flask and ngrok
+
+#### System Stability
+- **caffeinate integration**: Prevents Mac from sleeping during operation
+- **Process management**: PID files for both Flask and ngrok
+- **Clean shutdown**: Graceful termination with forced kill fallback
+
+#### Production Data
+- **5 months of data**: June-October 2025 in production
+- **12-month window**: Queries configured for rolling 12 months (returns available data)
+- **Verified metrics**: Monthly growth rate working correctly with prod data
+
+### October 27, 2025 - Query & PII Updates
+
+### Query Updates
+- **Monthly metrics now show rolling 12-month window** instead of all-time data
+- Queries updated: `/api/new-users/monthly` and `/api/growth-rate/monthly`
+- More relevant for ongoing analysis and keeps dashboard focused
+
+### PII Protection
+- **Hidden elements**: Top Active Posters chart and Top Performing Posts table
+- Implementation: CSS `display: none` (easily reversible)
+- Reason: Client presentation should not expose user names
+- Backend unchanged: All APIs still return full data
+
+### Content Adjustments
+- Removed job-related references (recruiters, job seekers, employers) from pain points
+- Refocused messaging on core platform value and user experience
+- More appropriate for current demo/presentation context
+
 ## Notes from Data Architect
 
-This dashboard represents the **minimum viable analytics foundation**. The architecture is solid and the queries are production-tested. 
+This dashboard represents the **minimum viable analytics foundation**. The architecture is solid and the queries are production-tested.
 
 **What I've validated:**
 - All queries run successfully on staging data

@@ -12,10 +12,6 @@ body {
     color: #333;
 }
 
-.hidden-chart {
-    display: none !important;
-}
-
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -340,7 +336,7 @@ footer {
     top: 15px;
     right: 15px;
     font-size: 1.5em;
-    cursor: help;
+    cursor: pointer;
     opacity: 0.6;
     transition: all 0.3s ease;
     z-index: 10;
@@ -367,39 +363,13 @@ footer {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    pointer-events: auto; /* Allow clicks on tooltip */
+    pointer-events: none;
 }
 
-/* Show tooltip when active class is added (via click) */
-.chart-tooltip.active {
+.chart-container:hover .chart-tooltip {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
-}
-
-/* Close button for tooltip */
-.tooltip-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #f56565;
-    color: white;
-    border: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.2em;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.tooltip-close:hover {
-    background: #e53e3e;
-    transform: rotate(90deg);
 }
 
 .tooltip-title {
@@ -454,7 +424,7 @@ footer {
         max-width: 90vw;
     }
     
-    .chart-tooltip.active {
+    .chart-container:hover .chart-tooltip {
         transform: translate(-50%, -50%);
     }
 }
@@ -617,6 +587,95 @@ footer {
 
 .close-btn:hover {
     background: #d0d0d0;
+}
+
+/* Info Modal */
+.info-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.info-modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+.info-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-modal-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: white;
+}
+
+.info-modal-body {
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.info-modal-body h3 {
+    color: #667eea;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.info-modal-body h3:first-child {
+    margin-top: 0;
+}
+
+.info-modal-body p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.info-modal-body code {
+    background: #f1f3f5;
+    padding: 10px 15px;
+    border-radius: 6px;
+    display: block;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #667eea;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.info-close-btn {
+    font-size: 2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: white;
+}
+
+.info-close-btn:hover {
+    transform: scale(1.2);
 }
 
 /* ============================================================================

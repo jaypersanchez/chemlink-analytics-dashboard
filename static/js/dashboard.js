@@ -29,6 +29,11 @@ function formatMonth(dateString) {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
 }
 
+function formatHour(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', hour12: true });
+}
+
 // API fetch helper
 async function fetchData(endpoint) {
     try {
@@ -139,15 +144,19 @@ async function loadGrowthRateChart() {
     if (!data || data.length === 0) return;
 
     const ctx = document.getElementById('growthRateChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.reverse().map(d => formatMonth(d.month)),
+            labels: sortedData.map(d => formatMonth(d.month)),
             datasets: [{
                 label: 'Growth Rate %',
-                data: data.map(d => d.growth_rate_pct || 0),
-                backgroundColor: data.map(d => 
-                    (d.growth_rate_pct || 0) >= 0 ? colors.success : colors.danger
+                data: sortedData.map(d => d.growth_rate_pct !== null ? d.growth_rate_pct : 0),
+                backgroundColor: sortedData.map(d => 
+                    (d.growth_rate_pct !== null && d.growth_rate_pct >= 0) ? colors.success : 
+                    (d.growth_rate_pct !== null && d.growth_rate_pct < 0) ? colors.danger : 
+                    '#ccc'
                 ),
                 borderWidth: 0
             }]
@@ -183,6 +192,152 @@ async function loadGrowthRateChart() {
                     ticks: {
                         callback: function(value) {
                             return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Login velocity chart (Kratos sessions)
+async function loadLoginVelocityChart() {
+    const data = await fetchData('auth/login-velocity/hourly');
+    if (!data || data.length === 0) return;
+
+    const canvas = document.getElementById('loginVelocityChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const sortedData = [...data].reverse();
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatHour(d.hour_bucket)),
+            datasets: [{
+                label: 'Sign-ins Started',
+                data: sortedData.map(d => d.sessions_started),
+                borderColor: colors.info,
+                backgroundColor: colors.info + '33',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} users`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hour of Day (last 24h)',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Sign-ins Started per Hour',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Unique authenticated identities (Kratos)
+async function loadUniqueIdentitiesChart() {
+    const data = await fetchData('auth/unique-identities/daily');
+    if (!data || data.length === 0) return;
+
+    const canvas = document.getElementById('uniqueIdentitiesChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const sortedData = [...data].reverse();
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatDate(d.day_bucket)),
+            datasets: [{
+                label: 'Unique Authenticated Users',
+                data: sortedData.map(d => d.unique_identities),
+                borderColor: colors.success,
+                backgroundColor: colors.success + '22',
+                borderWidth: 3,
+                tension: 0.35,
+                pointRadius: 3,
+                fill: true
+            }, {
+                label: 'Sign-ins Started',
+                data: sortedData.map(d => d.sessions_started),
+                borderColor: colors.info,
+                borderDash: [6, 4],
+                fill: false,
+                borderWidth: 2,
+                tension: 0.25,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            return `${label}: ${context.parsed.y.toLocaleString()} users`;
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date (Last 30 Days)',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Unique Authenticated Users / Sign-ins',
+                        font: { size: 12, weight: 'bold' },
+                        color: '#1f2933'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
                         }
                     }
                 }
@@ -264,7 +419,9 @@ async function loadMAUChart() {
                 label: 'Monthly Active Users',
                 data: data.map(d => d.active_users),
                 backgroundColor: colors.purple,
-                borderWidth: 0
+                borderWidth: 0,
+                barPercentage: data.length === 1 ? 0.3 : 0.8,  // Narrower bars for single data points
+                categoryPercentage: 0.9
             }]
         },
         options: {
@@ -445,7 +602,26 @@ async function loadEngagementRateChart() {
     const data = await fetchData('engagement/post-engagement-rate');
     if (!data || data.length === 0) return;
 
-    const ctx = document.getElementById('engagementRateChart').getContext('2d');
+    // Check if all engagement rates are 0
+    const hasEngagement = data.some(d => parseFloat(d.avg_comments_per_post) > 0);
+    
+    const canvas = document.getElementById('engagementRateChart');
+    const ctx = canvas.getContext('2d');
+    
+    // If no engagement, show message overlay
+    if (!hasEngagement) {
+        const container = canvas.parentElement;
+        let noDataMsg = container.querySelector('.no-data-message');
+        if (!noDataMsg) {
+            noDataMsg = document.createElement('div');
+            noDataMsg.className = 'no-data-message';
+            noDataMsg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#999;font-size:14px;z-index:10;pointer-events:none;';
+            noDataMsg.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:8px;">📊 No Engagement Data</div><div>0 comments on ' + data.reduce((sum, d) => sum + parseInt(d.total_posts), 0) + ' posts (last 30 days)</div>';
+            container.style.position = 'relative';
+            container.appendChild(noDataMsg);
+        }
+    }
+    
     new Chart(ctx, {
         type: 'bar',
         data: {
@@ -453,7 +629,7 @@ async function loadEngagementRateChart() {
             datasets: [{
                 label: 'Avg Comments per Post',
                 data: data.map(d => parseFloat(d.avg_comments_per_post) || 0),
-                backgroundColor: colors.success,
+                backgroundColor: hasEngagement ? colors.success : '#e2e8f0',
                 borderWidth: 0
             }]
         },
@@ -465,7 +641,13 @@ async function loadEngagementRateChart() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.parsed.y.toFixed(2) + ' comments per post';
+                            const idx = context.dataIndex;
+                            const posts = data[idx].total_posts || 0;
+                            const comments = data[idx].total_comments || 0;
+                            return [
+                                'Avg: ' + context.parsed.y.toFixed(2) + ' comments/post',
+                                'Posts: ' + posts + ' | Comments: ' + comments
+                            ];
                         }
                     }
                 }
@@ -480,6 +662,8 @@ async function loadEngagementRateChart() {
                 },
                 y: { 
                     beginAtZero: true,
+                    min: 0,
+                    max: hasEngagement ? undefined : 1,  // Force max to 1 if no engagement to show scale
                     title: {
                         display: true,
                         text: 'Average Comments per Post',
@@ -1097,6 +1281,568 @@ async function loadTopSkillsProjectsChart() {
 }
 
 // =============================================================================
+// FUNNEL ANALYTICS
+// =============================================================================
+
+// Account Creation Funnel
+async function loadAccountFunnelChart() {
+    const data = await fetchData('funnel/account-creation');
+    if (!data || data.length === 0) return;
+
+    const row = data[0];
+    const total = row.total_accounts;
+
+    // Define funnel stages with labels and values
+    const stages = [
+        { label: 'Account Created', value: total },
+        { label: 'Basic Info', value: row.step_basic_info },
+        { label: 'Added Headline', value: row.step_headline },
+        { label: 'Added Location', value: row.step_location },
+        { label: 'Added Company', value: row.step_company },
+        { label: 'Linked LinkedIn', value: row.step_linkedin },
+        { label: 'Enabled Finder', value: row.step_finder_enabled }
+    ];
+
+    const ctx = document.getElementById('accountFunnelChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: stages.map(s => s.label),
+            datasets: [{
+                label: 'Users Remaining',
+                data: stages.map(s => s.value),
+                backgroundColor: [
+                    '#667eea',
+                    '#764ba2', 
+                    '#48bb78',
+                    '#ed8936',
+                    '#4299e1',
+                    '#9f7aea',
+                    '#ed64a6'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.x;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            const dropPct = (100 - pct).toFixed(1);
+                            return [
+                                `Users: ${value.toLocaleString()}`,
+                                `Completion: ${pct}%`,
+                                `Drop-off: ${dropPct}%`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Onboarding Stage',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+
+    // Load pyramid chart with same data
+    loadAccountFunnelPyramidChart(stages, total);
+}
+
+// Account Creation Funnel Pyramid Chart (Custom Canvas Drawing)
+function loadAccountFunnelPyramidChart(stages, total) {
+    const canvas = document.getElementById('accountFunnelPyramidChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas dimensions based on container
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth - 40;
+    canvas.height = 400;
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    const maxValue = Math.max(...stages.map(s => s.value));
+    
+    // Calculate dimensions
+    const padding = 60;
+    const funnelHeight = height - (padding * 2);
+    const stageHeight = funnelHeight / stages.length;
+    const maxWidth = width - (padding * 2);
+    
+    // Colors matching bar chart
+    const stageColors = [
+        '#667eea',
+        '#764ba2', 
+        '#48bb78',
+        '#ed8936',
+        '#4299e1',
+        '#9f7aea',
+        '#ed64a6'
+    ];
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw funnel stages
+    stages.forEach((stage, index) => {
+        const y = padding + (index * stageHeight);
+        const stageWidth = (stage.value / maxValue) * maxWidth;
+        
+        // Calculate widths for trapezoid effect
+        let topWidth = stageWidth;
+        let bottomWidth = stageWidth;
+        
+        if (index < stages.length - 1) {
+            bottomWidth = (stages[index + 1].value / maxValue) * maxWidth;
+        }
+        
+        const topX = (width - topWidth) / 2;
+        const bottomX = (width - bottomWidth) / 2;
+        
+        // Draw trapezoid
+        ctx.fillStyle = stageColors[index];
+        ctx.strokeStyle = stageColors[index];
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        ctx.moveTo(topX, y);
+        ctx.lineTo(topX + topWidth, y);
+        ctx.lineTo(bottomX + bottomWidth, y + stageHeight);
+        ctx.lineTo(bottomX, y + stageHeight);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw stage label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(stage.label, width / 2, y + stageHeight / 2 - 12);
+        
+        // Draw count
+        ctx.font = '13px Arial';
+        ctx.fillText(stage.value.toLocaleString() + ' users', width / 2, y + stageHeight / 2 + 6);
+        
+        // Draw percentage
+        const percentage = ((stage.value / total) * 100).toFixed(1);
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillText(percentage + '%', width / 2, y + stageHeight / 2 + 22);
+    });
+    
+    // Make canvas responsive
+    window.addEventListener('resize', () => {
+        loadAccountFunnelPyramidChart(stages, total);
+    });
+}
+
+// =============================================================================
+// FINDER SEARCH ANALYTICS
+// =============================================================================
+
+// Finder Search Volume Chart
+async function loadFinderSearchesChart() {
+    const data = await fetchData('finder/searches');
+    if (!data || !data.search_timeline || data.search_timeline.length === 0) return;
+
+    const ctx = document.getElementById('finderSearchesChart').getContext('2d');
+    const sortedData = [...data.search_timeline].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatMonth(d.month)),
+            datasets: [{
+                label: 'Searches',
+                data: sortedData.map(d => d.searches),
+                borderColor: colors.info,
+                backgroundColor: colors.info + '33',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Searches: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `Total: ${data.total_searches} Searches`,
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Searches',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Search Intent Distribution Chart
+async function loadFinderIntentsChart() {
+    const data = await fetchData('finder/searches');
+    if (!data || !data.searches_by_intent || data.searches_by_intent.length === 0) return;
+
+    const ctx = document.getElementById('finderIntentsChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.searches_by_intent.map(d => d.intent),
+            datasets: [{
+                label: 'Searches',
+                data: data.searches_by_intent.map(d => d.search_count),
+                backgroundColor: chartColors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = data.total_searches;
+                            const value = context.parsed.x;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return 'Searches: ' + value.toLocaleString() + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Searches',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Search Intent',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Finder Engagement Rate Chart
+async function loadFinderEngagementChart() {
+    const data = await fetchData('finder/engagement');
+    if (!data) return;
+
+    const ctx = document.getElementById('finderEngagementChart').getContext('2d');
+    
+    // Show vote types breakdown
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.votes_by_type.map(d => d.vote_type),
+            datasets: [{
+                data: data.votes_by_type.map(d => d.vote_count),
+                backgroundColor: [
+                    colors.success,
+                    colors.danger,
+                    colors.warning,
+                    colors.info
+                ],
+                borderWidth: 2,
+                borderColor: '#1a1d29'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#cccccc',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = data.total_votes;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + pct + '%)';
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `${data.engagement_rate_pct}% Engagement Rate (${data.active_users} Active Users)`,
+                    color: '#ffffff',
+                    font: { size: 13, weight: 'bold' }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
+// COLLECTIONS FEATURE ENGAGEMENT
+// =============================================================================
+
+// Profile Additions to Collections Chart
+async function loadProfileAdditionsChart() {
+    const data = await fetchData('collections/profile-additions');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('profileAdditionsChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatMonth(d.month)),
+            datasets: [{
+                label: 'Profiles Added',
+                data: sortedData.map(d => d.profiles_added),
+                borderColor: colors.success,
+                backgroundColor: colors.success + '33',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Profiles Added: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Profiles Added',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Collections Created Chart
+async function loadCollectionsCreatedChart() {
+    const data = await fetchData('collections/created');
+    if (!data) return;
+
+    const ctx = document.getElementById('collectionsCreatedChart').getContext('2d');
+    
+    // Show privacy breakdown as doughnut chart
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.privacy_breakdown.map(d => d.privacy_type || 'Unknown'),
+            datasets: [{
+                data: data.privacy_breakdown.map(d => d.count),
+                backgroundColor: [
+                    colors.primary,
+                    colors.secondary,
+                    colors.warning,
+                    colors.info
+                ],
+                borderWidth: 2,
+                borderColor: '#1a1d29'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#cccccc',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = data.total_count;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + pct + '%)';
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `Total: ${data.total_count} Collections`,
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                }
+            }
+        }
+    });
+}
+
+// Collections Shared Chart
+async function loadCollectionsSharedChart() {
+    const data = await fetchData('collections/shared');
+    if (!data) return;
+
+    const ctx = document.getElementById('collectionsSharedChart').getContext('2d');
+    
+    // Show access type breakdown
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.access_type_breakdown.map(d => d.access_type || 'Unknown'),
+            datasets: [{
+                label: 'Collaborations',
+                data: data.access_type_breakdown.map(d => d.share_count),
+                backgroundColor: [
+                    colors.success,
+                    colors.warning,
+                    colors.info,
+                    colors.danger
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Shares: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `${data.shared_collections_count} Collections Shared (${data.total_shares} Total Collaborations)`,
+                    color: '#ffffff',
+                    font: { size: 13, weight: 'bold' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Access Type',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Shares',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
 // TOP POSTS TABLE
 // =============================================================================
 async function loadTopPostsTable() {
@@ -1124,6 +1870,476 @@ async function loadTopPostsTable() {
     });
 }
 
+// DAU Comprehensive Chart  
+async function loadDAUComprehensiveChart() {
+    const data = await fetchData('active-users/daily-comprehensive');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('dauComprehensiveChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatDate(d.date)),
+            datasets: [{
+                label: 'Active Users',
+                data: sortedData.map(d => d.active_users),
+                borderColor: colors.purple,
+                backgroundColor: colors.purple + '20',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Active Users: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Active Users',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// MAU Comprehensive Chart
+async function loadMAUComprehensiveChart() {
+    const data = await fetchData('active-users/monthly-comprehensive');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('mauComprehensiveChart').getContext('2d');
+    const sortedData = [...data].reverse();
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => formatMonth(d.month)),
+            datasets: [{
+                label: 'Active Users',
+                data: sortedData.map(d => d.active_users),
+                borderColor: colors.teal,
+                backgroundColor: colors.teal + '20',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Active Users: ' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Active Users',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Active Users by Type (Standard vs Finder)
+async function loadActiveUsersByTypeChart() {
+    const data = await fetchData('active-users/by-user-type');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activeUsersByTypeChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const userTypes = [...new Set(data.map(d => d.user_type))];
+    
+    const datasets = userTypes.map((type, index) => {
+        const typeData = months.map(month => {
+            const row = data.find(d => d.month === month && d.user_type === type);
+            return row ? row.active_users : 0;
+        });
+        
+        return {
+            label: type,
+            data: typeData,
+            backgroundColor: index === 0 ? colors.primary + '80' : colors.warning + '80',
+            borderColor: index === 0 ? colors.primary : colors.warning,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' users';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: false
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Active Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: false
+                }
+            }
+        }
+    });
+}
+
+// Collections by Privacy (Public vs Private)
+async function loadCollectionsPrivacyChart() {
+    const data = await fetchData('collections/created-by-privacy');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('collectionsPrivacyChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const privacyTypes = [...new Set(data.map(d => d.privacy_type))];
+    
+    const datasets = privacyTypes.map((type, index) => {
+        const typeData = months.map(month => {
+            const row = data.find(d => d.month === month && d.privacy_type === type);
+            return row ? row.collections_created : 0;
+        });
+        
+        const colorMap = {
+            'public': colors.success,
+            'private': colors.info,
+            'Not Set': '#999'
+        };
+        const color = colorMap[type.toLowerCase()] || chartColors[index];
+        
+        return {
+            label: type,
+            data: typeData,
+            backgroundColor: color + '80',
+            borderColor: color,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' collections';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Collections Created',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                }
+            }
+        }
+    });
+}
+
+// =============================================================================
+// ACTIVITY TYPE ANALYTICS
+// =============================================================================
+
+// Activity by Type Monthly Chart
+async function loadActivityByTypeMonthlyChart() {
+    const data = await fetchData('activity/by-type-monthly');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activityByTypeMonthlyChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const activityTypes = [...new Set(data.map(d => d.activity_type))];
+    
+    const datasets = activityTypes.map((type, index) => {
+        const typeData = months.map(month => {
+            const row = data.find(d => d.month === month && d.activity_type === type);
+            return row ? row.unique_users : 0;
+        });
+        
+        const colorMap = {
+            'post': colors.primary,
+            'comment': colors.success
+        };
+        const color = colorMap[type.toLowerCase()] || chartColors[index];
+        
+        return {
+            label: type.charAt(0).toUpperCase() + type.slice(1) + 's',
+            data: typeData,
+            backgroundColor: color + '80',
+            borderColor: color,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.reverse().map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' users';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Unique Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Activity Distribution Chart (Donut)
+async function loadActivityDistributionChart() {
+    const data = await fetchData('activity/distribution-current');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activityDistributionChart').getContext('2d');
+    
+    const labels = data.map(d => d.activity_type.charAt(0).toUpperCase() + d.activity_type.slice(1) + 's');
+    const values = data.map(d => d.unique_users);
+    const percentages = data.map(d => d.percentage);
+    
+    const colorMap = {
+        'Posts': colors.primary,
+        'Comments': colors.success
+    };
+    const backgroundColors = labels.map(label => colorMap[label] || chartColors[labels.indexOf(label)]);
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const percentage = percentages[context.dataIndex];
+                            return label + ': ' + value.toLocaleString() + ' users (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Activity Intensity Levels Chart
+async function loadActivityIntensityLevelsChart() {
+    const data = await fetchData('activity/intensity-levels');
+    if (!data || data.length === 0) return;
+
+    const ctx = document.getElementById('activityIntensityLevelsChart').getContext('2d');
+    
+    // Group data by month
+    const months = [...new Set(data.map(d => d.month))].sort();
+    const intensityLevels = ['Power User (20+)', 'Active User (10-19)', 'Regular User (5-9)', 'Casual User (1-4)'];
+    
+    const datasets = intensityLevels.map((level, index) => {
+        const levelData = months.map(month => {
+            const row = data.find(d => d.month === month && d.intensity_level === level);
+            return row ? row.user_count : 0;
+        });
+        
+        const colorMap = {
+            'Power User (20+)': colors.danger,
+            'Active User (10-19)': colors.warning,
+            'Regular User (5-9)': colors.info,
+            'Casual User (1-4)': colors.success
+        };
+        const color = colorMap[level] || chartColors[index];
+        
+        return {
+            label: level,
+            data: levelData,
+            backgroundColor: color + '80',
+            borderColor: color,
+            borderWidth: 2
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months.reverse().map(m => formatMonth(m)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' users';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true
+                },
+                y: { 
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    stacked: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 // =============================================================================
 // INITIALIZE DASHBOARD
 // =============================================================================
@@ -1136,15 +2352,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Growth metrics
     loadNewUsersMonthlyChart();
     loadGrowthRateChart();
+    loadLoginVelocityChart();
+    loadUniqueIdentitiesChart();
     loadDAUChart();
     loadMAUChart();
     loadMAUByCountryChart();
+    loadDAUComprehensiveChart();
+    loadMAUComprehensiveChart();
+    loadActiveUsersByTypeChart();
     
     // Engagement metrics
     loadPostFrequencyChart();
     loadEngagementRateChart();
     loadContentTypeChart();
     loadActivePostersChart();
+    
+    // Activity type analytics
+    loadActivityByTypeMonthlyChart();
+    loadActivityDistributionChart();
+    loadActivityIntensityLevelsChart();
+    
+    // Funnel analytics
+    loadAccountFunnelChart();
+    
+    // Finder search analytics
+    loadFinderSearchesChart();
+    loadFinderIntentsChart();
+    loadFinderEngagementChart();
+    
+    // Collections feature engagement
+    loadProfileAdditionsChart();
+    loadCollectionsCreatedChart();
+    loadCollectionsSharedChart();
+    loadCollectionsPrivacyChart();
     
     // Profile metrics
     loadProfileCompletionChart();
