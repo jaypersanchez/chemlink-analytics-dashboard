@@ -68,19 +68,41 @@ else
 fi
 
 # Start ngrok tunnel
-echo "Starting ngrok tunnel..."
-nohup ngrok http 5000 > "$NGROK_LOG_FILE" 2>&1 &
-NGROK_PID=$!
-echo $NGROK_PID > "$NGROK_PID_FILE"
+SKIP_NGROK_START=0
+if [ -f "$NGROK_PID_FILE" ]; then
+    EXISTING_NGROK_PID=$(cat "$NGROK_PID_FILE")
+    if ps -p "$EXISTING_NGROK_PID" > /dev/null 2>&1; then
+        echo "ngrok is already running with PID $EXISTING_NGROK_PID — skipping restart."
+        SKIP_NGROK_START=1
+        NGROK_PID=$EXISTING_NGROK_PID
+    else
+        echo "Removing stale ngrok PID file"
+        rm "$NGROK_PID_FILE"
+    fi
+fi
 
-# Wait for ngrok to initialize
-sleep 3
+if [ $SKIP_NGROK_START -eq 0 ]; then
+    echo "Starting ngrok tunnel..."
+    nohup ngrok http 5000 > "$NGROK_LOG_FILE" 2>&1 &
+    NGROK_PID=$!
+    echo $NGROK_PID > "$NGROK_PID_FILE"
 
-if ps -p $NGROK_PID > /dev/null; then
+    # Wait for ngrok to initialize
+    sleep 3
+else
+    # Give the existing tunnel a moment in case it was just started manually
+    sleep 1
+fi
+
+if [ -n "$NGROK_PID" ] && ps -p $NGROK_PID > /dev/null; then
     # Extract ngrok URL from the API
     NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o '"public_url":"https://[^"]*' | grep -o 'https://[^"]*' | head -1)
     
-    echo "✅ ngrok tunnel started successfully!"
+    if [ $SKIP_NGROK_START -eq 0 ]; then
+        echo "✅ ngrok tunnel started successfully!"
+    else
+        echo "✅ Reusing existing ngrok tunnel."
+    fi
     echo "   PID: $NGROK_PID"
     if [ -n "$NGROK_URL" ]; then
         echo "   Public URL: $NGROK_URL"
@@ -89,7 +111,13 @@ if ps -p $NGROK_PID > /dev/null; then
     echo ""
     echo "To stop: ./stop.sh"
 else
-    echo "❌ Failed to start ngrok"
-    echo "Check $NGROK_LOG_FILE for errors"
-    rm "$NGROK_PID_FILE"
+    if [ $SKIP_NGROK_START -eq 0 ]; then
+        echo "❌ Failed to start ngrok"
+        echo "Check $NGROK_LOG_FILE for errors"
+        rm "$NGROK_PID_FILE"
+    else
+        echo "❌ ngrok PID file existed but process is not running."
+        echo "Remove $NGROK_PID_FILE and rerun ./start.sh or start ngrok manually."
+        rm "$NGROK_PID_FILE"
+    fi
 fi

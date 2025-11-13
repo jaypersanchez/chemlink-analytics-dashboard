@@ -78,6 +78,20 @@ def get_chemlink_prd_db_connection():
         password=os.getenv('CHEMLINK_PRD_DB_PASSWORD')
     )
 
+def get_kratos_db_connection():
+    """Get connection to Kratos identity database (default: production)"""
+    host = os.getenv('KRATOS_DB_HOST') or os.getenv('KRATOS_PRD_DB_HOST')
+    if not host:
+        raise RuntimeError("KRATOS_DB_HOST or KRATOS_PRD_DB_HOST must be configured")
+    
+    return psycopg2.connect(
+        host=host,
+        port=os.getenv('KRATOS_DB_PORT', os.getenv('KRATOS_PRD_DB_PORT', 5432)),
+        database=os.getenv('KRATOS_DB_NAME', os.getenv('KRATOS_PRD_DB_NAME')),
+        user=os.getenv('KRATOS_DB_USER', os.getenv('KRATOS_PRD_DB_USER')),
+        password=os.getenv('KRATOS_DB_PASSWORD', os.getenv('KRATOS_PRD_DB_PASSWORD'))
+    )
+
 def execute_query(connection, query, params=None):
     """Execute a query and return results as list of dictionaries"""
     try:

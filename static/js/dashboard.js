@@ -605,7 +605,23 @@ async function loadEngagementRateChart() {
     // Check if all engagement rates are 0
     const hasEngagement = data.some(d => parseFloat(d.avg_comments_per_post) > 0);
     
-    const ctx = document.getElementById('engagementRateChart').getContext('2d');
+    const canvas = document.getElementById('engagementRateChart');
+    const ctx = canvas.getContext('2d');
+    
+    // If no engagement, show message overlay
+    if (!hasEngagement) {
+        const container = canvas.parentElement;
+        let noDataMsg = container.querySelector('.no-data-message');
+        if (!noDataMsg) {
+            noDataMsg = document.createElement('div');
+            noDataMsg.className = 'no-data-message';
+            noDataMsg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#999;font-size:14px;z-index:10;pointer-events:none;';
+            noDataMsg.innerHTML = '<div style="font-size:16px;font-weight:600;margin-bottom:8px;">📊 No Engagement Data</div><div>0 comments on ' + data.reduce((sum, d) => sum + parseInt(d.total_posts), 0) + ' posts (last 30 days)</div>';
+            container.style.position = 'relative';
+            container.appendChild(noDataMsg);
+        }
+    }
+    
     new Chart(ctx, {
         type: 'bar',
         data: {
@@ -613,7 +629,7 @@ async function loadEngagementRateChart() {
             datasets: [{
                 label: 'Avg Comments per Post',
                 data: data.map(d => parseFloat(d.avg_comments_per_post) || 0),
-                backgroundColor: colors.success,
+                backgroundColor: hasEngagement ? colors.success : '#e2e8f0',
                 borderWidth: 0
             }]
         },
@@ -625,7 +641,13 @@ async function loadEngagementRateChart() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.parsed.y.toFixed(2) + ' comments per post';
+                            const idx = context.dataIndex;
+                            const posts = data[idx].total_posts || 0;
+                            const comments = data[idx].total_comments || 0;
+                            return [
+                                'Avg: ' + context.parsed.y.toFixed(2) + ' comments/post',
+                                'Posts: ' + posts + ' | Comments: ' + comments
+                            ];
                         }
                     }
                 }

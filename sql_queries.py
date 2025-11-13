@@ -111,19 +111,34 @@ ORDER BY month DESC;"""
     "mau_by_country": {
         "name": "MAU by Country",
         "database": "Cross-database (Engagement + ChemLink)",
-        "query": """-- Step 1: Get active users from Engagement DB
-SELECT person_id, DATE_TRUNC('month', activity_date) as month
+        "query": """-- Step 1 (Engagement DB): monthly activity per user
+SELECT 
+    DATE_TRUNC('month', activity_date) AS month,
+    person_id,
+    COUNT(CASE WHEN activity_type = 'post' THEN 1 END) AS posts,
+    COUNT(CASE WHEN activity_type = 'comment' THEN 1 END) AS comments
 FROM (
-    SELECT person_id, created_at as activity_date FROM posts WHERE deleted_at IS NULL
-    UNION ALL
-    SELECT person_id, created_at FROM comments WHERE deleted_at IS NULL
+    SELECT person_id, created_at AS activity_date, 'post' AS activity_type
+    FROM posts
+    WHERE deleted_at IS NULL
+  UNION ALL
+    SELECT person_id, created_at, 'comment'
+    FROM comments
+    WHERE deleted_at IS NULL
 ) activity
+GROUP BY DATE_TRUNC('month', activity_date), person_id;
 
--- Step 2: Join with ChemLink DB for location data
--- Note: Person IDs currently don't match between databases
-JOIN persons p ON activity.person_id::text = p.id::text
+-- Step 2 (ChemLink DB): map those person_ids to countries
+-- Replace <person_id_list> with the IDs returned from step 1
+SELECT 
+    p.id::text AS person_id,
+    COALESCE(l.country, 'Unknown') AS country
+FROM persons p
 LEFT JOIN locations l ON p.location_id = l.id
-GROUP BY month, l.country;"""
+WHERE p.id::text IN (<person_id_list>);
+
+-- Final aggregation happens in the app layer by joining the two result sets
+-- on person_id and grouping by month + country."""
     },
     "post_frequency": {
         "name": "Post Frequency - Daily",
