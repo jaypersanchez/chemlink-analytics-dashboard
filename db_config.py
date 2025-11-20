@@ -15,6 +15,8 @@ def get_chemlink_env_connection():
         return get_chemlink_prd_db_connection()
     elif app_env == 'dev':
         return get_chemlink_dev_db_connection()
+    elif app_env == 'kube':
+        return get_chemlink_kube_db_connection()
     else:  # default to uat/staging
         return get_chemlink_db_connection()
 
@@ -25,6 +27,8 @@ def get_engagement_db_connection():
     
     if app_env == 'prod':
         return get_engagement_prd_db_connection()
+    elif app_env == 'kube':
+        return get_engagement_kube_db_connection()
     else:  # default to uat/staging
         return get_engagement_uat_db_connection()
 
@@ -76,6 +80,26 @@ def get_chemlink_prd_db_connection():
         database=os.getenv('CHEMLINK_PRD_DB_NAME'),
         user=os.getenv('CHEMLINK_PRD_DB_USER'),
         password=os.getenv('CHEMLINK_PRD_DB_PASSWORD')
+    )
+
+def get_chemlink_kube_db_connection():
+    """Get connection to ChemLink Kubernetes database (via port-forward)"""
+    return psycopg2.connect(
+        host=os.getenv('CHEMLINK_KUBE_DB_HOST'),
+        port=os.getenv('CHEMLINK_KUBE_DB_PORT', 5433),
+        database=os.getenv('CHEMLINK_KUBE_DB_NAME'),
+        user=os.getenv('CHEMLINK_KUBE_DB_USER'),
+        password=os.getenv('CHEMLINK_KUBE_DB_PASSWORD')
+    )
+
+def get_engagement_kube_db_connection():
+    """Get connection to Engagement Platform Kubernetes database (via port-forward)"""
+    return psycopg2.connect(
+        host=os.getenv('ENGAGEMENT_KUBE_DB_HOST'),
+        port=os.getenv('ENGAGEMENT_KUBE_DB_PORT', 5433),
+        database=os.getenv('ENGAGEMENT_KUBE_DB_NAME'),
+        user=os.getenv('ENGAGEMENT_KUBE_DB_USER'),
+        password=os.getenv('ENGAGEMENT_KUBE_DB_PASSWORD')
     )
 
 def get_kratos_db_connection():

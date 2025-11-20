@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Start Flask app in background with auto-reload and ngrok tunnel
-# Usage: ./start.sh [prod|uat|dev]
+# Usage: ./start.sh [prod|uat|dev|kube]
 # Default: prod
 
 PID_FILE="flask_app.pid"
@@ -13,9 +13,9 @@ NGROK_LOG_FILE="ngrok.log"
 ENV=${1:-prod}
 
 # Validate environment
-if [ "$ENV" != "prod" ] && [ "$ENV" != "uat" ] && [ "$ENV" != "dev" ]; then
+if [ "$ENV" != "prod" ] && [ "$ENV" != "uat" ] && [ "$ENV" != "dev" ] && [ "$ENV" != "kube" ]; then
     echo "❌ Invalid environment: $ENV"
-    echo "Usage: ./start.sh [prod|uat|dev]"
+    echo "Usage: ./start.sh [prod|uat|dev|kube]"
     echo "Default: prod"
     exit 1
 fi
